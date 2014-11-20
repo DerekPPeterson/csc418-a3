@@ -17,6 +17,8 @@
 #include <iostream>
 #include <cstdlib>
 
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+
 using namespace std;
 
 Raytracer::Raytracer() : _lightSource(NULL) {
@@ -226,6 +228,16 @@ Colour Raytracer::shadeRay( Ray3D& ray ) {
 	if (!ray.intersection.none) {
 		computeShading(ray); 
 		col = ray.col;  
+
+        if (ray.reflectCount > 0 && ray.intersection.mat->reflects) {
+            Vector3D normal = ray.intersection.normal;
+            Vector3D reflectDir = ray.dir - (ray.dir.dot(normal) * 2 * normal);
+            Ray3D reflectRay(ray.intersection.point, -reflectDir, 
+                    ray.reflectCount - 1);
+            col = 
+                col + ray.intersection.mat->reflective * shadeRay(reflectRay);
+            col.clamp();
+        }
 	}
 
 	// You'll want to call shadeRay recursively (with a different ray, 
@@ -245,9 +257,9 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 	initPixelBuffer();
 	viewToWorld = initInvViewMatrix(eye, view, up);
 
-    const int nAA = 3;
+    const int nAA = 1;
     double AA_increment = 0.5 / factor / nAA;
-    double AA_start = AA_increment / 2;
+    double AA_start = -0.5 / factor / nAA / 2 + AA_increment / 2;
 
     Vector3D AA_offsets[nAA*nAA];
     for (int i=0; i < nAA; i++) {
@@ -308,10 +320,10 @@ int main(int argc, char* argv[])
 	int width = 320; 
 	int height = 240; 
 
-	if (argc == 3) {
+    for (int i = 1; i < argc; i++) {
 		width = atoi(argv[1]);
 		height = atoi(argv[2]);
-	}
+    }
 
 	// Camera parameters.
 	Point3D eye(0, 0, 1);
@@ -322,10 +334,13 @@ int main(int argc, char* argv[])
 	// Defines a material for shading.
 	Material gold( Colour(0.3, 0.3, 0.3), Colour(0.75164, 0.60648, 0.22648), 
 			Colour(0.628281, 0.555802, 0.366065), 
-			51.2 );
+			51.2 , true, Colour(0.628281, 0.555802, 0.366065));
 	Material jade( Colour(0, 0, 0), Colour(0.54, 0.89, 0.63), 
 			Colour(0.316228, 0.316228, 0.316228), 
 			12.8 );
+    Material mirror(Colour(0.03, 0.03, 0.03), Colour(0, 0, 0), 
+            Colour(0.5, 0.5, 0.5), 50,
+            true, Colour(1, 1, 1));
 
 	// Defines a point light source.
 	raytracer.addLightSource( new PointLight(Point3D(0, 0, 5), 
@@ -333,6 +348,7 @@ int main(int argc, char* argv[])
 
 	// Add a unit square into the scene with material mat.
 	SceneDagNode* sphere = raytracer.addObject( new UnitSphere(), &gold );
+	SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
 	SceneDagNode* plane = raytracer.addObject( new UnitSquare(), &jade );
 	
 	// Apply some transformations to the unit square.
@@ -342,6 +358,8 @@ int main(int argc, char* argv[])
 	raytracer.rotate(sphere, 'x', -45); 
 	raytracer.rotate(sphere, 'z', 45); 
 	raytracer.scale(sphere, Point3D(0, 0, 0), factor1);
+
+    raytracer.translate(mirrorSphere, Vector3D(1, 3, -6));
 
 	raytracer.translate(plane, Vector3D(0, 0, -7));	
 	raytracer.rotate(plane, 'z', 45); 
