@@ -14,6 +14,41 @@
 
 using namespace std;
 
+Intersection rayPlaneIntersect( Ray3D& obRay, double z, 
+        bool (*bounds)(double x, double y))
+{
+    Intersection intersection;
+    intersection.none = true;
+
+    Vector3D normal = Vector3D(0, 0, 1);
+    Point3D point = Point3D(0, 0, z);
+
+    double denominator = obRay.dir.dot(normal);
+
+    // If denominator is 0 then ray is parallel
+    if (abs(denominator) > 1e-6) {
+
+        // Calculate intersection point
+        double numerator = (point - obRay.origin).dot(normal);
+        intersection.t_value = numerator / denominator;
+        intersection.point = obRay.origin + intersection.t_value * obRay.dir;
+        intersection.normal = normal;
+
+        // bounds check
+        if (bounds(intersection.point[0], intersection.point[1]) 
+                && intersection.t_value > 0) {
+            intersection.none = false;
+        }
+    }
+
+    return intersection;
+}
+
+bool squareBounds(double x, double y)
+{
+    return abs(x) < 0.5 && abs(y) < 0.5;
+}
+
 bool UnitSquare::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
 		const Matrix4x4& modelToWorld ) {
 
@@ -22,43 +57,23 @@ bool UnitSquare::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     obRay.origin = worldToModel * ray.origin;
     obRay.dir    = worldToModel * ray.dir;
 
-    Vector3D normal = Vector3D(0, 0, 1);
-    Point3D point = Point3D(0, 0, 0);
-
-    double denominator = obRay.dir.dot(normal);
-
-    // If denominator is 0 then ray is parallel
-    if (abs(denominator) < 1e-6) {
+    Intersection intersection = rayPlaneIntersect(obRay, 0, squareBounds);
+    if (intersection.none) {
         return false;
-    } else {
-
-        // Calculate intersection point
-        double numerator = (point - obRay.origin).dot(normal);
-        obRay.intersection.t_value = numerator / denominator;
-        obRay.intersection.point = 
-            obRay.origin + obRay.intersection.t_value * obRay.dir;
-        obRay.intersection.normal = normal;
-
-        // Check if in bounds
-        double x = obRay.intersection.point[0];
-        double y = obRay.intersection.point[1];
-        if (abs(x) > 0.5 || abs(y) > 0.5) {
-            return false;
-        }
     }
-    
+
     // check if closer intersection or reverse intersection
-    if (obRay.intersection.t_value < 1e-6 ||
+    if (intersection.t_value < 1e-6 ||
             (!ray.intersection.none
-            && obRay.intersection.t_value > ray.intersection.t_value)) {
+            && intersection.t_value > ray.intersection.t_value)) {
         return false;
     }
 
     // convert back to world space
     ray.intersection.none = false;
-    ray.intersection.point = modelToWorld * obRay.intersection.point;
-    ray.intersection.normal = transNorm(worldToModel, normal);
-    ray.intersection.t_value = obRay.intersection.t_value;
+    ray.intersection.point = modelToWorld * intersection.point;
+    ray.intersection.normal = transNorm(worldToModel, intersection.normal);
+    ray.intersection.t_value = intersection.t_value;
 
 	return true;
 }
@@ -118,6 +133,11 @@ bool UnitSphere::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     }
 }
 
+bool circleBounds(double x, double y) 
+{
+    return 0.25 > (x * x + y * y);
+}
+
 bool UnitCircle::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
 		const Matrix4x4& modelToWorld ) {
 
@@ -126,45 +146,49 @@ bool UnitCircle::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     obRay.origin = worldToModel * ray.origin;
     obRay.dir    = worldToModel * ray.dir;
 
-    Vector3D normal = Vector3D(0, 0, 1);
-    Point3D point = Point3D(0, 0, 0);
-
-    double denominator = obRay.dir.dot(normal);
-
-    // If denominator is 0 then ray is parallel
-    if (abs(denominator) < 1e-6) {
+    Intersection intersection = rayPlaneIntersect(obRay, 0, circleBounds);
+    if (intersection.none) {
         return false;
-    } else {
-
-        // Calculate intersection point
-        double numerator = (point - obRay.origin).dot(normal);
-        obRay.intersection.t_value = numerator / denominator;
-        obRay.intersection.point = 
-            obRay.origin + obRay.intersection.t_value * obRay.dir;
-        obRay.intersection.normal = normal;
-
-        // Check if in bounds
-        double x = obRay.intersection.point[0];
-        double y = obRay.intersection.point[1];
-        if (x * x + y * y > 0.25) {
-            return false;
-        }
     }
-    
+
     // check if closer intersection or reverse intersection
-    if (obRay.intersection.t_value < 1e-6 ||
+    if (intersection.t_value < 1e-6 ||
             (!ray.intersection.none
-            && obRay.intersection.t_value > ray.intersection.t_value)) {
+            && intersection.t_value > ray.intersection.t_value)) {
         return false;
     }
 
     // convert back to world space
     ray.intersection.none = false;
-    ray.intersection.point = modelToWorld * obRay.intersection.point;
-    ray.intersection.normal = transNorm(worldToModel, normal);
-    ray.intersection.t_value = obRay.intersection.t_value;
+    ray.intersection.point = modelToWorld * intersection.point;
+    ray.intersection.normal = transNorm(worldToModel, intersection.normal);
+    ray.intersection.t_value = intersection.t_value;
 
 	return true;
+}
+
+Intersection chooseIntersection(Intersection I1, Intersection I2)
+{
+    Intersection I;
+    I.none = true;
+
+    if (!I1.none && I1.t_value > 0) {
+        I = I1;
+        
+        if (!I2.none && I2.t_value < I1.t_value) {
+            I = I2;
+        }
+    }
+
+    if (!I2.none && I2.t_value > 0) {
+        I = I2;
+
+        if (!I1.none && I1.t_value < I2.t_value) {
+            I = I1;
+        }
+    }
+
+    return I;
 }
 
 bool UnitCylinder::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
@@ -175,6 +199,10 @@ bool UnitCylinder::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     obRay.origin = worldToModel * ray.origin;
     obRay.dir    = worldToModel * ray.dir;
 
+    Intersection sideIntersection;
+    sideIntersection.none = true;
+
+    // Cylinder side intersection
     // Calculate 2D circle intersection
     Vector3D dir2D(obRay.dir[0], obRay.dir[1], 0);
     Vector3D or2D(obRay.origin[0], obRay.origin[1], 0);
@@ -185,38 +213,51 @@ bool UnitCylinder::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
 
     double det = b * b - 4 * a * c;
 
-    // check if any intersection
+    // Calculate intersection
     if (det < 0) {
         return false;
+    } else {
+        double t1 = (-b + sqrt(det)) / 2 / a;
+        double t2 = (-b - sqrt(det)) / 2 / a;
+        sideIntersection.t_value = min(t1, t2);
+
+        sideIntersection.point = obRay.origin + sideIntersection.t_value * obRay.dir;
+
+        // check if intersect in correct height
+        if (abs(sideIntersection.point[2]) < 0.5) {
+             sideIntersection.normal[0] = sideIntersection.point[0];
+             sideIntersection.normal[1] = sideIntersection.point[1];
+             sideIntersection.normal[2] = 0;
+             sideIntersection.none = false;
+        }
     }
 
-    double t1 = (-b + sqrt(det)) / 2 / a;
-    double t2 = (-b - sqrt(det)) / 2 / a;
+    // check top and bottom
+    Intersection topIntersection = rayPlaneIntersect(obRay, 0.5, circleBounds);
+    Intersection bottomIntersection = rayPlaneIntersect(obRay, -0.5, circleBounds);
+    bottomIntersection.normal = Vector3D(0, 0, -1);
 
-    double t_val = min(t1, t2);
+    Intersection intersection = sideIntersection;
+    intersection = chooseIntersection(intersection, bottomIntersection);
+    intersection = chooseIntersection(intersection, topIntersection);
 
-    Point3D point = obRay.origin + t_val * obRay.dir;
-
-    // check if intersect in correct height
-    if (abs(point[2]) > 0.5) {
+    // check if closer intersection or reverse intersection
+    if (intersection.t_value < 1e-6 ||
+            (!ray.intersection.none
+            && intersection.t_value > ray.intersection.t_value)) {
         return false;
     }
 
-    // check if closer intersection or reverse intersection
-    if (t_val< 1e-6 ||
-            (!ray.intersection.none
-            && t_val > ray.intersection.t_value)) {
+    if (intersection.none && intersection.t_value > 0) {
         return false;
     }
     
-
-    Vector3D normal(point[0], point[1], 0);
-
     // convert back to world space
     ray.intersection.none = false;
-    ray.intersection.point = modelToWorld * point;
-    ray.intersection.normal = transNorm(worldToModel, normal);
-    ray.intersection.t_value = t_val;
+    ray.intersection.point = modelToWorld * intersection.point;
+    ray.intersection.normal = transNorm(worldToModel, intersection.normal);
+    ray.intersection.t_value = intersection.t_value;
 
 	return true;
 }
+

@@ -381,7 +381,7 @@ int main(int argc, char* argv[])
     //raytracer.translate(circle, Vector3D(0, 1, -3));
 
     raytracer.translate(cylinder, Vector3D(0, 0, -3));
-    raytracer.rotate(cylinder, 'y', -90);
+    raytracer.rotate(cylinder, 'y', -45);
     raytracer.rotate(cylinder, 'x', -45);
 
 	//raytracer.translate(plane, Vector3D(0, 0, -7));	

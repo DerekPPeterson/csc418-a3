@@ -40,6 +40,11 @@ void PointLight::shade( Ray3D& ray ) {
     normal.normalize();
     lightDir.normalize();
 
+    // reverse normal if hitting backside
+    if (normal.dot(ray.dir) > 0) {
+        normal = - normal;
+    }
+
     Colour diffuse = normal.dot(lightDir) * ray.intersection.mat->diffuse * _col_diffuse;
     col = col + diffuse;
 
