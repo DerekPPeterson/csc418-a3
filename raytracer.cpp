@@ -48,7 +48,7 @@ SceneDagNode* Raytracer::addObject( SceneDagNode* parent,
 		parent->next = node;
 	}
 	
-	return node;
+	return node;;
 }
 
 LightListNode* Raytracer::addLightSource( LightSource* light ) {
@@ -236,6 +236,7 @@ Colour Raytracer::shadeRay( Ray3D& ray ) {
 
 void Raytracer::render( int width, int height, Point3D eye, Vector3D view, 
 		Vector3D up, double fov, char* fileName ) {
+
 	Matrix4x4 viewToWorld;
 	_scrWidth = width;
 	_scrHeight = height;
@@ -244,28 +245,54 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 	initPixelBuffer();
 	viewToWorld = initInvViewMatrix(eye, view, up);
 
+    const int nAA = 3;
+    double AA_increment = 0.5 / factor / nAA;
+    double AA_start = AA_increment / 2;
+
+    Vector3D AA_offsets[nAA*nAA];
+    for (int i=0; i < nAA; i++) {
+        for (int j=0; j < nAA; j++) {
+            AA_offsets[nAA*i + j][0] = AA_start + AA_increment * i;
+            AA_offsets[nAA*i + j][1] = AA_start + AA_increment * j;
+            AA_offsets[nAA*i + j][2] = 0;
+        }
+    }
+
 	// Construct a ray for each pixel.
+    long total = _scrHeight * _scrWidth * nAA * nAA;
 	for (int i = 0; i < _scrHeight; i++) {
 		for (int j = 0; j < _scrWidth; j++) {
-			// Sets up ray origin and direction in view space, 
-			// image plane is at z = -1.
 			Point3D origin(0, 0, 0);
 			Point3D imagePlane;
 			imagePlane[0] = (-double(width)/2 + 0.5 + j)/factor;
 			imagePlane[1] = (-double(height)/2 + 0.5 + i)/factor;
 			imagePlane[2] = -1;
 
-			Ray3D ray;
-            ray.origin = viewToWorld * origin;
-            ray.dir = viewToWorld * (imagePlane - origin);
+            
+            Colour col(0, 0, 0);
+            for (int k=0; k < nAA * nAA; k++) {
+                Point3D rayTarget = imagePlane + AA_offsets[k];
+                Ray3D ray;
+                ray.origin = viewToWorld * origin;
+                ray.dir = viewToWorld * (rayTarget - origin);
 
-			Colour col = shadeRay(ray); 
+                col = col + shadeRay(ray);
+            }
+
+            col = (1.0 / nAA / nAA) * col;
 
 			_rbuffer[i*width+j] = int(col[0]*255);
 			_gbuffer[i*width+j] = int(col[1]*255);
 			_bbuffer[i*width+j] = int(col[2]*255);
 		}
+        long done = (i+1) * _scrWidth * nAA * nAA;
+        double percent = double(done) / total * 100;
+        cout << fileName << ": " << done << " of " << total << " (";
+        printf("%.2f", percent);
+        cout << "%)\r";
+        fflush(stdout);
 	}
+    cout << "\n";
 
 	flushPixelBuffer(fileName);
 }
