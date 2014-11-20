@@ -40,7 +40,7 @@ void PointLight::shade( Ray3D& ray ) {
     normal.normalize();
     lightDir.normalize();
 
-    Colour diffuse = max(0.0, normal.dot(lightDir)) * ray.intersection.mat->diffuse * _col_diffuse;
+    Colour diffuse = normal.dot(lightDir) * ray.intersection.mat->diffuse * _col_diffuse;
     col = col + diffuse;
 
     // Perfect reflection dir

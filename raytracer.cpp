@@ -265,7 +265,7 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 	initPixelBuffer();
 	viewToWorld = initInvViewMatrix(eye, view, up);
 
-    const int nAA = 2;
+    const int nAA = 1;
     double AA_increment = 0.5 / factor / nAA;
     double AA_start = -0.5 / factor / nAA / 2 + AA_increment / 2;
 
@@ -295,6 +295,7 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
                 Ray3D ray;
                 ray.origin = viewToWorld * origin;
                 ray.dir = viewToWorld * (rayTarget - origin);
+                ray.dir.normalize();
 
                 col = col + shadeRay(ray);
             }
@@ -337,7 +338,7 @@ int main(int argc, char* argv[])
 	Point3D eye(0, 0, 1);
 	Vector3D view(0, 0, -1);
 	Vector3D up(0, 1, 0);
-	double fov = 60;
+	double fov = 70;
 
 	// Defines a material for shading.
 	Material gold( Colour(0.3, 0.3, 0.3), Colour(0.75164, 0.60648, 0.22648), 
@@ -351,35 +352,52 @@ int main(int argc, char* argv[])
             true, Colour(1, 1, 1));
 
 	// Defines a point light source.
-	raytracer.addLightSource( new PointLight(Point3D(0, 0, 5), 
+	raytracer.addLightSource( new PointLight(Point3D(0, 6, 0), 
 				Colour(0.9, 0.9, 0.9) ) );
 
 	// Add a unit square into the scene with material mat.
-	SceneDagNode* sphere = raytracer.addObject( new UnitSphere(), &gold );
-	SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
 	SceneDagNode* plane = raytracer.addObject( new UnitSquare(), &jade );
+	SceneDagNode* sphere = raytracer.addObject( new UnitSphere(), &gold );
+	SceneDagNode* sphere2 = raytracer.addObject( new UnitSphere(), &jade );
+	//SceneDagNode* circle = raytracer.addObject( new UnitCircle(), &gold );
+	//SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
 	
 	// Apply some transformations to the unit square.
 	double factor1[3] = { 1.0, 2.0, 1.0 };
 	double factor2[3] = { 6.0, 6.0, 6.0 };
+	double factor3[3] = { 2.0, 2.0, 2.0 };
+
+    raytracer.translate(plane, Vector3D(1, 0, -5));
+    //raytracer.rotate(plane, 'x', -90);
+    //raytracer.scale(plane, Point3D(0, 0, 0), factor2);
+    
 	raytracer.translate(sphere, Vector3D(0, 0, -5));	
-	raytracer.rotate(sphere, 'x', -45); 
-	raytracer.rotate(sphere, 'z', 45); 
-	raytracer.scale(sphere, Point3D(0, 0, 0), factor1);
+	//raytracer.rotate(sphere, 'x', -45); 
+	//raytracer.rotate(sphere, 'z', 45); 
+	//raytracer.scale(sphere, Point3D(0, 0, 0), factor1);
 
-    raytracer.translate(mirrorSphere, Vector3D(1, 3, -6));
+	raytracer.translate(sphere2, Vector3D(0, 1, -5));	
+	//raytracer.rotate(mirrorSphere, 'x', -45); 
+	//raytracer.rotate(mirrorSphere, 'z', 45); 
+	//raytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor1);
 
-	raytracer.translate(plane, Vector3D(0, 0, -7));	
-	raytracer.rotate(plane, 'z', 45); 
-	raytracer.scale(plane, Point3D(0, 0, 0), factor2);
+    //raytracer.translate(mirrorSphere, Vector3D(1, 3, -6));
+
+    //raytracer.translate(circle, Vector3D(-1, -6, -5));
+	//raytracer.rotate(plane, 'y', -45); 
+	//raytracer.scale(sphere, Point3D(0, 0, 0), factor3);
+
+	//raytracer.translate(plane, Vector3D(0, 0, -7));	
+	//raytracer.rotate(plane, 'z', 45); 
+	//raytracer.scale(plane, Point3D(0, 0, 0), factor2);
 
 	// Render the scene, feel free to make the image smaller for
 	// testing purposes.	
 	raytracer.render(width, height, eye, view, up, fov, "view1.bmp");
 	
 	// Render it from a different point of view.
-	Point3D eye2(4, 2, 1);
-	Vector3D view2(-4, -2, -6);
+	Point3D eye2(4, 0, 4);
+	Vector3D view2(-4, 0, -4);
 	raytracer.render(width, height, eye2, view2, up, fov, "view2.bmp");
 	
 	return 0;
