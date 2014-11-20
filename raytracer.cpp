@@ -48,7 +48,7 @@ SceneDagNode* Raytracer::addObject( SceneDagNode* parent,
 		parent->next = node;
 	}
 	
-	return node;;
+	return node;
 }
 
 LightListNode* Raytracer::addLightSource( LightSource* light ) {
@@ -224,7 +224,6 @@ Colour Raytracer::shadeRay( Ray3D& ray ) {
 	// Don't bother shading if the ray didn't hit 
 	// anything.
 	if (!ray.intersection.none) {
-        ray.col = ray.intersection.mat->diffuse;
 		computeShading(ray); 
 		col = ray.col;  
 	}

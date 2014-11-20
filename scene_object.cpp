@@ -50,7 +50,6 @@ bool UnitSquare::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
             obRay.origin + obRay.intersection.t_value * obRay.dir;
         obRay.intersection.normal = normal;
 
-
         // Check if in bounds
         double x = obRay.intersection.point[0];
         double y = obRay.intersection.point[1];
