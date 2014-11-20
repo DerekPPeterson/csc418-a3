@@ -17,6 +17,8 @@
 #include <iostream>
 #include <cstdlib>
 
+using namespace std;
+
 Raytracer::Raytracer() : _lightSource(NULL) {
 	_root = new SceneDagNode();
 }
@@ -217,10 +219,12 @@ void Raytracer::flushPixelBuffer( char *file_name ) {
 Colour Raytracer::shadeRay( Ray3D& ray ) {
 	Colour col(0.0, 0.0, 0.0); 
 	traverseScene(_root, ray); 
+
 	
 	// Don't bother shading if the ray didn't hit 
 	// anything.
 	if (!ray.intersection.none) {
+        ray.col = ray.intersection.mat->diffuse;
 		computeShading(ray); 
 		col = ray.col;  
 	}
@@ -256,6 +260,8 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 			// shadeRay(ray) to generate pixel colour. 	
 			
 			Ray3D ray;
+            ray.origin = origin;
+            ray.dir = imagePlane - origin;
 
 			Colour col = shadeRay(ray); 
 
@@ -308,7 +314,7 @@ int main(int argc, char* argv[])
 	
 	// Apply some transformations to the unit square.
 	double factor1[3] = { 1.0, 2.0, 1.0 };
-	double factor2[3] = { 6.0, 6.0, 6.0 };
+	double factor2[3] = { 1.0, 1.0, 1.0 };
 	raytracer.translate(sphere, Vector3D(0, 0, -5));	
 	raytracer.rotate(sphere, 'x', -45); 
 	raytracer.rotate(sphere, 'z', 45); 
