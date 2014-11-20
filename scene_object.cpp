@@ -58,9 +58,10 @@ bool UnitSquare::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
         }
     }
     
-    // check if closer intersection
-    if (!ray.intersection.none && 
-            (obRay.intersection.t_value > ray.intersection.t_value)) {
+    // check if closer intersection or reverse intersection
+    if (obRay.intersection.t_value < 1e-6 ||
+            (!ray.intersection.none
+            && obRay.intersection.t_value > ray.intersection.t_value)) {
         return false;
     }
 
@@ -115,9 +116,10 @@ bool UnitSphere::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
 
         obRay.intersection.t_value = min(t_val_norm1, t_val_norm2);
         
-        // check if closer intersection
-        if (!ray.intersection.none && 
-                (obRay.intersection.t_value > ray.intersection.t_value)) {
+        // check if closer intersection or reverse intersection
+        if (obRay.intersection.t_value < 1e-6 ||
+                (!ray.intersection.none
+                && obRay.intersection.t_value > ray.intersection.t_value)) {
             return false;
         }
 

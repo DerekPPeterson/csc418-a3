@@ -29,6 +29,11 @@ void PointLight::shade( Ray3D& ray ) {
     Colour ambient = _col_ambient * ray.intersection.mat->ambient;
     col = col + ambient;
 
+    if (ray.intersection.shadow) {
+        ray.col = col;
+        return;
+    }
+
     // Ray from intersection point to light source
     Vector3D lightDir = get_position() - ray.intersection.point;
     Vector3D normal = ray.intersection.normal;

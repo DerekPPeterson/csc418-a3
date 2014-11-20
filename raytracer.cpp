@@ -190,10 +190,17 @@ void Raytracer::computeShading( Ray3D& ray ) {
 		if (curLight == NULL) break;
 		// Each lightSource provides its own shading function.
 
-		// Implement shadows here if needed.
+        // shadows
+        Vector3D shadowDir = curLight->light->get_position() - ray.intersection.point;
+        shadowDir.normalize();
+        Point3D shadowOrigin = ray.intersection.point + 1e-6 * shadowDir; // avoid self-intersection
+        Ray3D shadowRay(shadowOrigin, shadowDir, 0);
+        traverseScene(_root, shadowRay);
 
-		curLight->light->shade(ray);
-		curLight = curLight->next;
+        ray.intersection.shadow = (!shadowRay.intersection.none);
+
+        curLight->light->shade(ray);
+        curLight = curLight->next;
 	}
 }
 
@@ -222,17 +229,18 @@ Colour Raytracer::shadeRay( Ray3D& ray ) {
 	Colour col(0.0, 0.0, 0.0); 
 	traverseScene(_root, ray); 
 
-	
+
 	// Don't bother shading if the ray didn't hit 
 	// anything.
 	if (!ray.intersection.none) {
+
 		computeShading(ray); 
 		col = ray.col;  
 
         if (ray.reflectCount > 0 && ray.intersection.mat->reflects) {
             Vector3D normal = ray.intersection.normal;
             Vector3D reflectDir = ray.dir - (ray.dir.dot(normal) * 2 * normal);
-            Ray3D reflectRay(ray.intersection.point, -reflectDir, 
+            Ray3D reflectRay(ray.intersection.point, reflectDir, 
                     ray.reflectCount - 1);
             col = 
                 col + ray.intersection.mat->reflective * shadeRay(reflectRay);
@@ -257,7 +265,7 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 	initPixelBuffer();
 	viewToWorld = initInvViewMatrix(eye, view, up);
 
-    const int nAA = 1;
+    const int nAA = 2;
     double AA_increment = 0.5 / factor / nAA;
     double AA_start = -0.5 / factor / nAA / 2 + AA_increment / 2;
 
@@ -271,7 +279,7 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
     }
 
 	// Construct a ray for each pixel.
-    long total = _scrHeight * _scrWidth * nAA * nAA;
+    long total = _scrHeight * _scrWidth;
 	for (int i = 0; i < _scrHeight; i++) {
 		for (int j = 0; j < _scrWidth; j++) {
 			Point3D origin(0, 0, 0);
@@ -297,7 +305,7 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 			_gbuffer[i*width+j] = int(col[1]*255);
 			_bbuffer[i*width+j] = int(col[2]*255);
 		}
-        long done = (i+1) * _scrWidth * nAA * nAA;
+        long done = (i+1) * _scrWidth;
         double percent = double(done) / total * 100;
         cout << fileName << ": " << done << " of " << total << " (";
         printf("%.2f", percent);
