@@ -256,12 +256,9 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 			imagePlane[1] = (-double(height)/2 + 0.5 + i)/factor;
 			imagePlane[2] = -1;
 
-			// TODO: Convert ray to world space and call 
-			// shadeRay(ray) to generate pixel colour. 	
-			
 			Ray3D ray;
-            ray.origin = origin;
-            ray.dir = imagePlane - origin;
+            ray.origin = viewToWorld * origin;
+            ray.dir = viewToWorld * (imagePlane - origin);
 
 			Colour col = shadeRay(ray); 
 
@@ -314,7 +311,7 @@ int main(int argc, char* argv[])
 	
 	// Apply some transformations to the unit square.
 	double factor1[3] = { 1.0, 2.0, 1.0 };
-	double factor2[3] = { 1.0, 1.0, 1.0 };
+	double factor2[3] = { 6.0, 6.0, 6.0 };
 	raytracer.translate(sphere, Vector3D(0, 0, -5));	
 	raytracer.rotate(sphere, 'x', -45); 
 	raytracer.rotate(sphere, 'z', 45); 

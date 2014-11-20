@@ -63,8 +63,9 @@ bool UnitSquare::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
 
     // convert back to world space
     ray.intersection.none = false;
-    ray.intersection.point = obRay.intersection.point;
-    ray.intersection.normal = normal;
+    ray.intersection.point = modelToWorld * obRay.intersection.point;
+    ray.intersection.normal = transNorm(worldToModel, normal);
+    ray.intersection.t_value = obRay.intersection.t_value;
 
 	return true;
 }
