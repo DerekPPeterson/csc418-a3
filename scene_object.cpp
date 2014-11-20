@@ -40,7 +40,6 @@ bool UnitSquare::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
 
     // If denominator is 0 then ray is parallel
     if (abs(denominator) < 1e-6) {
-        ray.intersection.none = true;
         return false;
     } else {
 
@@ -56,7 +55,6 @@ bool UnitSquare::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
         double x = obRay.intersection.point[0];
         double y = obRay.intersection.point[1];
         if (abs(x) > 0.5 || abs(y) > 0.5) {
-            ray.intersection.none = true;
             return false;
         }
     }
@@ -113,11 +111,15 @@ bool UnitSphere::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
         double t_val_norm1 = (-b + sqrt(det)) / 2 / a;
         double t_val_norm2 = (-b - sqrt(det)) / 2 / a;
 
-        obRay.intersection.t_value = t_val_norm2;
+        if (t_val_norm1 < 0) t_val_norm1 = 0;
+        if (t_val_norm2 < 0) t_val_norm2 = 0;
+
+        obRay.intersection.t_value = min(t_val_norm1, t_val_norm2);
         
         // check if closer intersection
         if (!ray.intersection.none && 
-                obRay.intersection.t_value > ray.intersection.t_value) {
+                (obRay.intersection.t_value > ray.intersection.t_value)) {
+            return false;
         }
 
         obRay.intersection.point = 
