@@ -239,17 +239,20 @@ Colour Raytracer::shadeRay( Ray3D& ray ) {
 
         if (ray.reflectCount > 0 && ray.intersection.mat->reflects) {
             Vector3D normal = ray.intersection.normal;
-            Vector3D reflectDir = ray.dir - (ray.dir.dot(normal) * 2 * normal);
+            normal.normalize();
+            Vector3D dir = ray.dir;
+            dir.normalize();
+
+            Vector3D reflectDir = dir - ( normal.dot(dir) * 2 * normal);
+
             Ray3D reflectRay(ray.intersection.point, reflectDir, 
                     ray.reflectCount - 1);
+
             col = 
                 col + ray.intersection.mat->reflective * shadeRay(reflectRay);
             col.clamp();
         }
 	}
-
-	// You'll want to call shadeRay recursively (with a different ray, 
-	// of course) here to implement reflection/refraction effects.  
 
 	return col; 
 }	
@@ -351,6 +354,11 @@ int main(int argc, char* argv[])
             Colour(0.5, 0.5, 0.5), 50,
             true, Colour(1, 1, 1));
 
+    Material red( Colour(0.3, 0, 0), Colour(0.7, 0, 0), Colour(0.2, 0, 0), 10);
+    Material blue( Colour(0., 0, 0.3), Colour(0, 0, 0.7), Colour(0, 0, 0.2), 10);
+    Material green( Colour(0, 0.3, 0), Colour(0, 0.7, 0), Colour(0, 0.2, 0), 10);
+    Material white( Colour(0.3, 0.3, 0.3), Colour(0.7, 0.7, 0.7), Colour(0.2, 0.2, 0.2), 10);
+
 	// Defines a point light source.
 	raytracer.addLightSource( new PointLight(Point3D(0, 6, 0), 
 				Colour(0.9, 0.9, 0.9) ) );
@@ -360,8 +368,15 @@ int main(int argc, char* argv[])
 	//SceneDagNode* sphere = raytracer.addObject( new UnitSphere(), &gold );
 	//SceneDagNode* sphere2 = raytracer.addObject( new UnitSphere(), &jade );
 	//SceneDagNode* circle = raytracer.addObject( new UnitCircle(), &gold );
-	//SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
-	SceneDagNode* cylinder = raytracer.addObject( new UnitCylinder(), &gold );
+	SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
+	//SceneDagNode* mirrorSquare = raytracer.addObject( new UnitSquare(), &mirror );
+	//SceneDagNode* cylinder = raytracer.addObject( new UnitCylinder(), &gold );
+
+	SceneDagNode* redSphere = raytracer.addObject( new UnitSphere(), &red );
+	SceneDagNode* blueSphere = raytracer.addObject( new UnitSphere(), &blue );
+	SceneDagNode* greenSphere = raytracer.addObject( new UnitSphere(), &green );
+	SceneDagNode* whiteSphere = raytracer.addObject( new UnitSphere(), &white );
+
 	
 	// Apply some transformations to the unit square.
 	double factor1[3] = { 1.0, 2.0, 1.0 };
@@ -371,31 +386,38 @@ int main(int argc, char* argv[])
     raytracer.translate(plane, Vector3D(0, -1, -5));
     raytracer.rotate(plane, 'x', -90);
     raytracer.scale(plane, Point3D(0, 0, 0), factor2);
+
+
+    //raytracer.translate(mirrorSquare, Vector3D(0, -1, -8));
+    //raytracer.scale(mirrorSquare, Point3D(0, 0, 0), factor2);
+    //raytracer.scale(mirrorSquare, Point3D(0, 0, 0), factor2);
     
 	//raytracer.translate(sphere, Vector3D(-2, -0.5, -3));	
 
 	//raytracer.translate(sphere2, Vector3D(2, -0.5, -3));	
 
-    //raytracer.translate(mirrorSphere, Vector3D(0, -0.5, -5));
+    raytracer.translate(mirrorSphere, Vector3D(0, 2, -5));
+    raytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
 
     //raytracer.translate(circle, Vector3D(0, 1, -3));
 
-    raytracer.translate(cylinder, Vector3D(0, 0, -3));
-    raytracer.rotate(cylinder, 'y', -45);
-    raytracer.rotate(cylinder, 'x', -45);
+    //raytracer.translate(cylinder, Vector3D(0, 0, -3));
+    //raytracer.rotate(cylinder, 'y', -45);
+    //raytracer.rotate(cylinder, 'x', -45);
 
-	//raytracer.translate(plane, Vector3D(0, 0, -7));	
-	//raytracer.rotate(plane, 'z', 45); 
-	//raytracer.scale(plane, Point3D(0, 0, 0), factor2);
+    raytracer.translate( redSphere, Vector3D(3, -1, -2));
+    raytracer.translate( blueSphere, Vector3D(-3, -1, -2));
+    raytracer.translate( greenSphere, Vector3D(3, -1, -7));
+    raytracer.translate( whiteSphere, Vector3D(-3, -1, -7));
 
 	// Render the scene, feel free to make the image smaller for
 	// testing purposes.	
 	raytracer.render(width, height, eye, view, up, fov, "view1.bmp");
 	
 	// Render it from a different point of view.
-	Point3D eye2(0, 3, 1);
-	Vector3D view2(0, -3, -1);
-	//raytracer.render(width, height, eye2, view2, up, fov, "view2.bmp");
+	Point3D eye2(0, 3, -3);
+	Vector3D view2(0, -3, -3);
+	raytracer.render(width, height, eye2, view2, up, fov, "view2.bmp");
 	
 	return 0;
 }
