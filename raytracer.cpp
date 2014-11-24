@@ -194,7 +194,7 @@ void Raytracer::computeShading( Ray3D& ray ) {
         Vector3D shadowDir = curLight->light->get_position() - ray.intersection.point;
         shadowDir.normalize();
         Point3D shadowOrigin = ray.intersection.point + 1e-6 * shadowDir; // avoid self-intersection
-        Ray3D shadowRay(shadowOrigin, shadowDir, 0);
+        Ray3D shadowRay(shadowOrigin, shadowDir, 0, 0);
         traverseScene(_root, shadowRay);
 
         ray.intersection.shadow = (!shadowRay.intersection.none);
@@ -237,6 +237,7 @@ Colour Raytracer::shadeRay( Ray3D& ray ) {
 		computeShading(ray); 
 		col = ray.col;  
 
+        // Reflection
         if (ray.reflectCount > 0 && ray.intersection.mat->reflects) {
             Vector3D normal = ray.intersection.normal;
             normal.normalize();
@@ -246,11 +247,52 @@ Colour Raytracer::shadeRay( Ray3D& ray ) {
             Vector3D reflectDir = dir - ( normal.dot(dir) * 2 * normal);
 
             Ray3D reflectRay(ray.intersection.point, reflectDir, 
-                    ray.reflectCount - 1);
+                    ray.reflectCount - 1, ray.refractCount);
 
             col = 
                 col + ray.intersection.mat->reflective * shadeRay(reflectRay);
             col.clamp();
+        }
+
+        // Refraction
+        if (ray.refractCount > 0 && ray.intersection.mat->clear) {
+            Vector3D normal = ray.intersection.normal;
+            normal.normalize();
+            normal = normal;
+            Vector3D dir = ray.dir;
+            dir.normalize();
+            double n = ray.intersection.mat->n;
+
+            double c = - normal.dot(dir);
+            double r;
+
+            // if entering a solid
+            if (c > 0) {
+                r = 1.0 / n;
+            // if exiting
+            } else {
+                r = n;
+                normal = -normal;
+            }
+             cout << r << "\n";
+
+            Vector3D refractDir = r * dir + (r * c - sqrt( 1 - r* r * ( 1 - c* c))) * normal;
+
+            cout << dir << "\n";
+            cout << normal << "\n";
+            cout << refractDir << "\n";
+
+
+            // only if no totoal internal reflection
+            //if (refractDir.dot(dir) > 0) {
+            if (true) {
+
+                Ray3D refractRay(ray.intersection.point, refractDir, 
+                        ray.reflectCount, ray.refractCount - 1);
+                col = 
+                    col + ray.intersection.mat->transparency * shadeRay(refractRay);
+                col.clamp();
+            }
         }
 	}
 
@@ -350,9 +392,14 @@ int main(int argc, char* argv[])
 	Material jade( Colour(0, 0, 0), Colour(0.54, 0.89, 0.63), 
 			Colour(0.316228, 0.316228, 0.316228), 
 			12.8 );
-    Material mirror(Colour(0.03, 0.03, 0.03), Colour(0, 0, 0), 
+    Material mirror(Colour(0.1, 0.1, 0.1), Colour(0, 0, 0), 
             Colour(0.5, 0.5, 0.5), 50,
             true, Colour(1, 1, 1));
+
+    Material glass(Colour(0.03, 0.03, 0.03), Colour(0, 0, 0), 
+            Colour(1, 1, 1), 100,
+            true, Colour(0.05, 0.05, 0.05), 
+            true, Colour(0.9, 0.9, 0.9), 1.4);
 
     Material red( Colour(0.3, 0, 0), Colour(0.7, 0, 0), Colour(0.2, 0, 0), 10);
     Material blue( Colour(0., 0, 0.3), Colour(0, 0, 0.7), Colour(0, 0, 0.2), 10);
@@ -369,6 +416,7 @@ int main(int argc, char* argv[])
 	//SceneDagNode* sphere2 = raytracer.addObject( new UnitSphere(), &jade );
 	//SceneDagNode* circle = raytracer.addObject( new UnitCircle(), &gold );
 	SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
+	SceneDagNode* glassSphere = raytracer.addObject( new UnitSphere(), &glass );
 	//SceneDagNode* mirrorSquare = raytracer.addObject( new UnitSquare(), &mirror );
 	//SceneDagNode* cylinder = raytracer.addObject( new UnitCylinder(), &gold );
 
@@ -399,6 +447,9 @@ int main(int argc, char* argv[])
     raytracer.translate(mirrorSphere, Vector3D(0, 2, -5));
     raytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
 
+    raytracer.translate(glassSphere, Vector3D(0, 0, -2));
+    raytracer.scale(glassSphere, Point3D(0, 0, 0), factor3);
+
     //raytracer.translate(circle, Vector3D(0, 1, -3));
 
     //raytracer.translate(cylinder, Vector3D(0, 0, -3));
@@ -417,7 +468,7 @@ int main(int argc, char* argv[])
 	// Render it from a different point of view.
 	Point3D eye2(0, 3, -3);
 	Vector3D view2(0, -3, -3);
-	raytracer.render(width, height, eye2, view2, up, fov, "view2.bmp");
+	//raytracer.render(width, height, eye2, view2, up, fov, "view2.bmp");
 	
 	return 0;
 }
