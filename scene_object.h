@@ -9,6 +9,7 @@
 ***********************************************************/
 
 #include "util.h"
+#include "obj_io.h"
 
 // All primitives should provide a intersection function.  
 // To create more primitives, inherit from SceneObject.
@@ -50,5 +51,21 @@ class UnitCylinder : public SceneObject {
 public:
 	bool intersect( Ray3D& ray, const Matrix4x4& worldToModel,
 			const Matrix4x4& modelToWorld );
+};
+
+class Mesh : public SceneObject {
+public:
+    Mesh(char * obj_filename)
+    {
+        nFaces = read_obj(obj_filename, faces);
+    };
+    ~Mesh() {
+        delete(faces);
+    }
+	bool intersect( Ray3D& ray, const Matrix4x4& worldToModel,
+			const Matrix4x4& modelToWorld );
+private:
+    int nFaces;
+    TriangleFace * faces;
 };
 

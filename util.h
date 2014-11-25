@@ -221,6 +221,11 @@ struct Ray3D {
 
     int refractCount;
 };
+
+struct TriangleFace {
+    Point3D points[3];
+    Vector3D normal;
+};
 #endif
 
 

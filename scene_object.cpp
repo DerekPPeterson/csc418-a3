@@ -11,17 +11,15 @@
 #include <cmath>
 #include <iostream>
 #include "scene_object.h"
+#include "obj_io.h"
 
 using namespace std;
 
-Intersection rayPlaneIntersect( Ray3D& obRay, double z, 
+Intersection rayPlaneIntersect( Ray3D& obRay, Point3D point, Vector3D normal, 
         bool (*bounds)(double x, double y))
 {
     Intersection intersection;
     intersection.none = true;
-
-    Vector3D normal = Vector3D(0, 0, 1);
-    Point3D point = Point3D(0, 0, z);
 
     double denominator = obRay.dir.dot(normal);
 
@@ -66,7 +64,7 @@ bool Checkerboard::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     obRay.origin = worldToModel * ray.origin;
     obRay.dir    = worldToModel * ray.dir;
 
-    Intersection intersection = rayPlaneIntersect(obRay, 0, checkerBounds);
+    Intersection intersection = rayPlaneIntersect(obRay, Point3D(0, 0, 0), Vector3D(0, 0, 1), checkerBounds);
     if (intersection.none) {
         return false;
     }
@@ -96,7 +94,7 @@ bool UnitSquare::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     obRay.origin = worldToModel * ray.origin;
     obRay.dir    = worldToModel * ray.dir;
 
-    Intersection intersection = rayPlaneIntersect(obRay, 0, squareBounds);
+    Intersection intersection = rayPlaneIntersect(obRay, Point3D(0, 0, 0), Vector3D(0, 0, 1), squareBounds);
     if (intersection.none) {
         return false;
     }
@@ -196,7 +194,7 @@ bool UnitCircle::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     obRay.origin = worldToModel * ray.origin;
     obRay.dir    = worldToModel * ray.dir;
 
-    Intersection intersection = rayPlaneIntersect(obRay, 0, circleBounds);
+    Intersection intersection = rayPlaneIntersect(obRay, Point3D(0, 0, 0), Vector3D(0, 0, 1), circleBounds);
     if (intersection.none) {
         return false;
     }
@@ -283,8 +281,8 @@ bool UnitCylinder::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     }
 
     // check top and bottom
-    Intersection topIntersection = rayPlaneIntersect(obRay, 0.5, circleBounds);
-    Intersection bottomIntersection = rayPlaneIntersect(obRay, -0.5, circleBounds);
+    Intersection topIntersection = rayPlaneIntersect(obRay, Point3D(0, 0, 0.5), Vector3D(0, 0, 1), circleBounds);
+    Intersection bottomIntersection = rayPlaneIntersect(obRay, Point3D(0, 0, -0.5), Vector3D(0, 0, -1), circleBounds);
     bottomIntersection.normal = Vector3D(0, 0, -1);
 
     Intersection intersection = sideIntersection;
@@ -307,6 +305,74 @@ bool UnitCylinder::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     ray.intersection.point = modelToWorld * intersection.point;
     ray.intersection.normal = transNorm(worldToModel, intersection.normal);
     ray.intersection.t_value = intersection.t_value;
+
+	return true;
+}
+
+bool fullPlane(double x, double y)
+{
+    return true;
+}
+
+bool Mesh::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
+		const Matrix4x4& modelToWorld ) {
+
+    // Ray in object space
+    Ray3D obRay = Ray3D();
+    obRay.origin = worldToModel * ray.origin;
+    obRay.dir    = worldToModel * ray.dir;
+
+    Vector3D origin(0, 0, 0);
+
+    Intersection intersection;
+    intersection.none = true;
+
+    faces = this->faces;
+    TriangleFace * face = faces;
+    while (face != NULL) {
+        // Need to pass triangle points into the bounds function, so have to 
+        // do the plane boundry checking outside
+        Intersection faceIntersect = rayPlaneIntersect(obRay, face->points[0],
+                face->normal, fullPlane);
+        intersection.none = true;
+
+        // Test if point is inside the triangle using barycentric coordinates
+        Vector3D u = face->points[1] - face->points[0];
+        Vector3D v = face->points[2] - face->points[0];
+        Vector3D w = faceIntersect.point - face->points[0];
+
+        // Precompute cross products
+        Vector3D vcw = v.cross(w);
+        Vector3D ucw = u.cross(w);
+        Vector3D vcu = v.cross(u);
+        Vector3D ucv = -vcu;
+
+        // Signs of parameters
+        double r_sign = vcw.dot(vcu);
+        double t_sign = ucw.dot(ucv);
+        if (! ( r_sign > 0 && t_sign > 0)) {
+            continue;
+        }
+
+        // Magintudes of parameters
+        double den = ucv.dot(ucv);
+        double r = vcw.dot(vcw) / den;
+        double t = ucw.dot(ucw) / den;
+        if (! (r < 1 && t < 1) ) {
+            continue;
+        }
+
+        intersection.none = true;
+
+        intersection = chooseIntersection(intersection, faceIntersect);
+
+        face++;
+    }
+
+    if (intersection.none) {
+        return false;
+    }
+
 
 	return true;
 }

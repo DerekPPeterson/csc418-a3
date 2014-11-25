@@ -308,7 +308,7 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 	initPixelBuffer();
 	viewToWorld = initInvViewMatrix(eye, view, up);
 
-    const int nAA = 2;
+    const int nAA = 3;
     double AA_increment = 0.5 / factor / nAA;
     double AA_start = -0.5 / factor / nAA / 2 + AA_increment / 2;
 
@@ -424,6 +424,8 @@ int main(int argc, char* argv[])
 	SceneDagNode* greenSphere = raytracer.addObject( new UnitSphere(), &green );
 	SceneDagNode* whiteSphere = raytracer.addObject( new UnitSphere(), &white );
 
+
+	SceneDagNode* cow = raytracer.addObject( new Mesh("obj/cow-nonormals.obj"), &red );
 	
 	// Apply some transformations to the unit square.
 	double factor1[3] = { 1.0, 2.0, 1.0 };
