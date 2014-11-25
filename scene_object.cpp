@@ -49,6 +49,45 @@ bool squareBounds(double x, double y)
     return abs(x) < 0.5 && abs(y) < 0.5;
 }
 
+bool checkerBounds(double x, double y)
+{
+    if (long(x) % 2 != x > 0) {
+        return long(y) % 2 != y > 0;
+    } else {
+        return long(y) % 2 == 0 != y > 0;
+    }
+}
+
+bool Checkerboard::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
+		const Matrix4x4& modelToWorld ) {
+
+    // Ray in object space
+    Ray3D obRay = Ray3D();
+    obRay.origin = worldToModel * ray.origin;
+    obRay.dir    = worldToModel * ray.dir;
+
+    Intersection intersection = rayPlaneIntersect(obRay, 0, checkerBounds);
+    if (intersection.none) {
+        return false;
+    }
+
+    // check if closer intersection or reverse intersection
+    if (intersection.t_value < 1e-6 ||
+            (!ray.intersection.none
+            && intersection.t_value > ray.intersection.t_value)) {
+        return false;
+    }
+
+    // convert back to world space
+    ray.intersection.none = false;
+    ray.intersection.point = modelToWorld * intersection.point;
+    ray.intersection.normal = transNorm(worldToModel, intersection.normal);
+    ray.intersection.t_value = intersection.t_value;
+
+	return true;
+}
+
+
 bool UnitSquare::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
 		const Matrix4x4& modelToWorld ) {
 

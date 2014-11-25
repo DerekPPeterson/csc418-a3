@@ -269,28 +269,34 @@ Colour Raytracer::shadeRay( Ray3D& ray ) {
             // if entering a solid
             if (c > 0) {
                 r = 1.0 / n;
+                cout << "enter\n";
             // if exiting
             } else {
                 r = n;
-                normal = -normal;
+                normal = normal;
+                c = c;
+                cout << "exit\n";
             }
-             cout << r << "\n";
+
+            cout << ray.refractCount << "\n";
+            cout << r << "\n";
+            cout << c << "\n";
 
             Vector3D refractDir = r * dir + (r * c - sqrt( 1 - r* r * ( 1 - c* c))) * normal;
 
             cout << dir << "\n";
             cout << normal << "\n";
-            cout << refractDir << "\n";
+            cout << refractDir << "\n\n";
 
 
             // only if no totoal internal reflection
             //if (refractDir.dot(dir) > 0) {
             if (true) {
-
-                Ray3D refractRay(ray.intersection.point, refractDir, 
+                Ray3D refractRay(ray.intersection.point + 2e-6 * refractDir , refractDir, 
                         ray.reflectCount, ray.refractCount - 1);
                 col = 
-                    col + ray.intersection.mat->transparency * shadeRay(refractRay);
+                    //col + ray.intersection.mat->transparency * shadeRay(refractRay);
+                    col + shadeRay(refractRay);
                 col.clamp();
             }
         }
@@ -389,7 +395,7 @@ int main(int argc, char* argv[])
 	Material gold( Colour(0.3, 0.3, 0.3), Colour(0.75164, 0.60648, 0.22648), 
 			Colour(0.628281, 0.555802, 0.366065), 
 			51.2 , true, 0.5 * Colour(0.628281, 0.555802, 0.366065));
-	Material jade( Colour(0, 0, 0), Colour(0.54, 0.89, 0.63), 
+	Material jade( Colour(0.054, 0.089, 0.063), Colour(0.54, 0.89, 0.63), 
 			Colour(0.316228, 0.316228, 0.316228), 
 			12.8 );
     Material mirror(Colour(0.1, 0.1, 0.1), Colour(0, 0, 0), 
@@ -398,8 +404,8 @@ int main(int argc, char* argv[])
 
     Material glass(Colour(0.03, 0.03, 0.03), Colour(0, 0, 0), 
             Colour(1, 1, 1), 100,
-            true, Colour(0.05, 0.05, 0.05), 
-            true, Colour(0.9, 0.9, 0.9), 1.4);
+            false, Colour(0.05, 0.05, 0.05), 
+            true, Colour(0.9, 0.9, 0.9), 1.1);
 
     Material red( Colour(0.3, 0, 0), Colour(0.7, 0, 0), Colour(0.2, 0, 0), 10);
     Material blue( Colour(0., 0, 0.3), Colour(0, 0, 0.7), Colour(0, 0, 0.2), 10);
@@ -411,7 +417,8 @@ int main(int argc, char* argv[])
 				Colour(0.9, 0.9, 0.9) ) );
 
 	// Add a unit square into the scene with material mat.
-	SceneDagNode* plane = raytracer.addObject( new UnitSquare(), &jade );
+	//SceneDagNode* plane = raytracer.addObject( new UnitSquare(), &jade );
+	SceneDagNode* checker = raytracer.addObject( new Checkerboard(), &jade );
 	//SceneDagNode* sphere = raytracer.addObject( new UnitSphere(), &gold );
 	//SceneDagNode* sphere2 = raytracer.addObject( new UnitSphere(), &jade );
 	//SceneDagNode* circle = raytracer.addObject( new UnitCircle(), &gold );
@@ -431,10 +438,12 @@ int main(int argc, char* argv[])
 	double factor2[3] = { 6.0, 6.0, 6.0 };
 	double factor3[3] = { 2.0, 2.0, 2.0 };
 
-    raytracer.translate(plane, Vector3D(0, -1, -5));
-    raytracer.rotate(plane, 'x', -90);
-    raytracer.scale(plane, Point3D(0, 0, 0), factor2);
+    //raytracer.translate(plane, Vector3D(0, -1, -5));
+    //raytracer.rotate(plane, 'x', -90);
+    //raytracer.scale(plane, Point3D(0, 0, 0), factor2);
 
+    raytracer.rotate(checker, 'x', -90);
+    raytracer.translate(checker, Vector3D(0, 0,-1));
 
     //raytracer.translate(mirrorSquare, Vector3D(0, -1, -8));
     //raytracer.scale(mirrorSquare, Point3D(0, 0, 0), factor2);
@@ -444,10 +453,10 @@ int main(int argc, char* argv[])
 
 	//raytracer.translate(sphere2, Vector3D(2, -0.5, -3));	
 
-    raytracer.translate(mirrorSphere, Vector3D(0, 2, -5));
+    raytracer.translate(mirrorSphere, Vector3D(1.5, 0, -4));
     raytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
 
-    raytracer.translate(glassSphere, Vector3D(0, 0, -2));
+    raytracer.translate(glassSphere, Vector3D(-1.5, 0, -4));
     raytracer.scale(glassSphere, Point3D(0, 0, 0), factor3);
 
     //raytracer.translate(circle, Vector3D(0, 1, -3));
