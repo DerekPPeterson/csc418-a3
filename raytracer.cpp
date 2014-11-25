@@ -229,7 +229,6 @@ Colour Raytracer::shadeRay( Ray3D& ray ) {
 	Colour col(0.0, 0.0, 0.0); 
 	traverseScene(_root, ray); 
 
-
 	// Don't bother shading if the ray didn't hit 
 	// anything.
 	if (!ray.intersection.none) {
@@ -269,24 +268,17 @@ Colour Raytracer::shadeRay( Ray3D& ray ) {
             // if entering a solid
             if (c > 0) {
                 r = 1.0 / n;
-                cout << "enter\n";
             // if exiting
             } else {
                 r = n;
-                normal = normal;
-                c = c;
-                cout << "exit\n";
+                normal = -normal;
+                c = -c;
             }
 
-            cout << ray.refractCount << "\n";
-            cout << r << "\n";
-            cout << c << "\n";
 
             Vector3D refractDir = r * dir + (r * c - sqrt( 1 - r* r * ( 1 - c* c))) * normal;
+            refractDir.normalize();
 
-            cout << dir << "\n";
-            cout << normal << "\n";
-            cout << refractDir << "\n\n";
 
 
             // only if no totoal internal reflection
@@ -316,7 +308,7 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 	initPixelBuffer();
 	viewToWorld = initInvViewMatrix(eye, view, up);
 
-    const int nAA = 1;
+    const int nAA = 2;
     double AA_increment = 0.5 / factor / nAA;
     double AA_start = -0.5 / factor / nAA / 2 + AA_increment / 2;
 
@@ -405,7 +397,7 @@ int main(int argc, char* argv[])
     Material glass(Colour(0.03, 0.03, 0.03), Colour(0, 0, 0), 
             Colour(1, 1, 1), 100,
             false, Colour(0.05, 0.05, 0.05), 
-            true, Colour(0.9, 0.9, 0.9), 1.1);
+            true, Colour(0.9, 0.9, 0.9), 1.2);
 
     Material red( Colour(0.3, 0, 0), Colour(0.7, 0, 0), Colour(0.2, 0, 0), 10);
     Material blue( Colour(0., 0, 0.3), Colour(0, 0, 0.7), Colour(0, 0, 0.2), 10);
@@ -456,7 +448,7 @@ int main(int argc, char* argv[])
     raytracer.translate(mirrorSphere, Vector3D(1.5, 0, -4));
     raytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
 
-    raytracer.translate(glassSphere, Vector3D(-1.5, 0, -4));
+    raytracer.translate(glassSphere, Vector3D(0, 0, -2));
     raytracer.scale(glassSphere, Point3D(0, 0, 0), factor3);
 
     //raytracer.translate(circle, Vector3D(0, 1, -3));
@@ -477,7 +469,7 @@ int main(int argc, char* argv[])
 	// Render it from a different point of view.
 	Point3D eye2(0, 3, -3);
 	Vector3D view2(0, -3, -3);
-	//raytracer.render(width, height, eye2, view2, up, fov, "view2.bmp");
+	raytracer.render(width, height, eye2, view2, up, fov, "view2.bmp");
 	
 	return 0;
 }

@@ -119,12 +119,11 @@ bool UnitSquare::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
 
 bool UnitSphere::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
 		const Matrix4x4& modelToWorld ) {
-    
+
     // Ray in object space
     Ray3D obRay = Ray3D();
     obRay.origin = worldToModel * ray.origin;
     obRay.dir    = worldToModel * ray.dir;
-
 
     Point3D origin = Point3D(0, 0, 0);
     Vector3D rayOrginVec = obRay.origin - origin;
@@ -145,10 +144,23 @@ bool UnitSphere::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
         double t_val_norm1 = (-b + sqrt(det)) / 2 / a;
         double t_val_norm2 = (-b - sqrt(det)) / 2 / a;
 
-        if (t_val_norm1 < 0) t_val_norm1 = 0;
-        if (t_val_norm2 < 0) t_val_norm2 = 0;
+        double t_val = -1;
+        if (t_val_norm1 > 0) {
+            t_val = t_val_norm1;
+            
+            if (t_val_norm2 > 0 && t_val_norm2 < t_val_norm1) {
+                t_val = t_val_norm2;
+            }
+        }
+        if (t_val_norm2 > 0) {
+            t_val = t_val_norm2;
+            
+            if (t_val_norm1 > 0 && t_val_norm1 < t_val_norm2) {
+                t_val = t_val_norm1;
+            }
+        }
 
-        obRay.intersection.t_value = min(t_val_norm1, t_val_norm2);
+        obRay.intersection.t_value = t_val;
         
         // check if closer intersection or reverse intersection
         if (obRay.intersection.t_value < 1e-6 ||
@@ -162,7 +174,6 @@ bool UnitSphere::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
 
         Vector3D normal = obRay.intersection.point - origin;
 
-        
         ray.intersection.none = false;
         ray.intersection.t_value = obRay.intersection.t_value;
         ray.intersection.point = modelToWorld * obRay.intersection.point;
