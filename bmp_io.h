@@ -20,7 +20,7 @@ void bmp_header1_print ( unsigned short int filetype,
   unsigned long int filesize, unsigned short int reserved1, 
   unsigned short int reserved2, unsigned long int bitmapoffset );
 bool bmp_header1_read ( std::ifstream &file_in, unsigned short int *filetype, 
-  unsigned long int *filesize, unsigned long int *reserved1, 
+  unsigned long int *filesize, unsigned short int *reserved1, 
   unsigned short int *reserved2, unsigned long int *bitmapoffset );
 void bmp_header1_write ( std::ofstream &file_out, unsigned short int filetype,
   unsigned long int filesize, unsigned long int reserved1, 

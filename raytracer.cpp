@@ -243,6 +243,11 @@ Colour Raytracer::shadeRay( Ray3D& ray ) {
             Vector3D dir = ray.dir;
             dir.normalize();
 
+            // correct wrong facing normals
+            if (normal.dot(dir) > 0) {
+                normal = -normal;
+            }
+
             Vector3D reflectDir = dir - ( normal.dot(dir) * 2 * normal);
 
             Ray3D reflectRay(ray.intersection.point + 1e-6 * reflectDir, reflectDir, 
@@ -266,29 +271,30 @@ Colour Raytracer::shadeRay( Ray3D& ray ) {
             double r;
 
             // if entering a solid
-            if (c > 0) {
+            if (!ray.inside) {
                 r = 1.0 / n;
             // if exiting
             } else {
                 r = n;
+            }
+            
+            // correct surface normal if wrong way
+            if (c < 0) {
                 normal = -normal;
                 c = -c;
             }
 
-
             Vector3D refractDir = r * dir + (r * c - sqrt( 1 - r* r * ( 1 - c* c))) * normal;
             refractDir.normalize();
-
-
 
             // only if no totoal internal reflection
             //if (refractDir.dot(dir) > 0) {
             if (true) {
                 Ray3D refractRay(ray.intersection.point + 2e-6 * refractDir , refractDir, 
                         ray.reflectCount, ray.refractCount - 1);
+                refractRay.inside = !ray.inside;
                 col = 
-                    //col + ray.intersection.mat->transparency * shadeRay(refractRay);
-                    col + shadeRay(refractRay);
+                    col + ray.intersection.mat->transparency * shadeRay(refractRay);
                 col.clamp();
             }
         }
@@ -308,7 +314,7 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 	initPixelBuffer();
 	viewToWorld = initInvViewMatrix(eye, view, up);
 
-    const int nAA = 1;
+    const int nAA = 2;
     double AA_increment = 0.5 / factor / nAA;
     double AA_start = -0.5 / factor / nAA / 2 + AA_increment / 2;
 
@@ -363,6 +369,11 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 
 int main(int argc, char* argv[])
 {	
+    Texture test = Texture("./textures/earth-1024x512.bmp");
+    cout << test.getCol(0, 0.5);
+    return 0;
+
+
 	// Build your scene and setup your camera here, by calling 
 	// functions from Raytracer.  The code here sets up an example
 	// scene and renders it from two different view points, DO NOT
@@ -397,7 +408,7 @@ int main(int argc, char* argv[])
     Material glass(Colour(0.03, 0.03, 0.03), Colour(0, 0, 0), 
             Colour(1, 1, 1), 100,
             false, Colour(0.05, 0.05, 0.05), 
-            true, Colour(0.9, 0.9, 0.9), 1.2);
+            true, Colour(0.9, 0.9, 0.9), 1);
 
     Material red( Colour(0.3, 0, 0), Colour(0.7, 0, 0), Colour(0.2, 0, 0), 10);
     Material blue( Colour(0., 0, 0.3), Colour(0, 0, 0.7), Colour(0, 0, 0.2), 10);
@@ -424,8 +435,8 @@ int main(int argc, char* argv[])
 	//SceneDagNode* greenSphere = raytracer.addObject( new UnitSphere(), &green );
 	//SceneDagNode* whiteSphere = raytracer.addObject( new UnitSphere(), &white );
 
-	//SceneDagNode* cow = raytracer.addObject( new Mesh("obj/cube.obj"), &mirror );
-	SceneDagNode* cow = raytracer.addObject( new Mesh("obj/cow-nonormals.obj"), &red );
+	SceneDagNode* cube = raytracer.addObject( new Mesh("obj/cube.obj"), &mirror );
+	//SceneDagNode* cow = raytracer.addObject( new Mesh("obj/cow-nonormals.obj"), &mirror );
 	
 	// Apply some transformations to the unit square.
 	double factor1[3] = { 1.0, 2.0, 1.0 };
@@ -439,9 +450,13 @@ int main(int argc, char* argv[])
     raytracer.rotate(checker, 'x', -90);
     raytracer.translate(checker, Vector3D(0, 0,-1));
 
-    raytracer.translate(cow, Vector3D(0, -1, -7));
+    //raytracer.translate(cow, Vector3D(0, -1, -7));
     //raytracer.rotate(cow, 'x', -45);
     //raytracer.rotate(cow, 'z', -45);
+
+    raytracer.translate(cube, Vector3D(0, -1, -3));
+    //raytracer.rotate(cube, 'x', -45);
+    //raytracer.rotate(cube, 'z', -45);
 
     //raytracer.translate(mirrorSquare, Vector3D(0, -1, -8));
     //raytracer.scale(mirrorSquare, Point3D(0, 0, 0), factor2);
@@ -475,7 +490,7 @@ int main(int argc, char* argv[])
 	// Render it from a different point of view.
 	Point3D eye2(0, 3, -3);
 	Vector3D view2(0, -3, -3);
-	//raytracer.render(width, height, eye2, view2, up, fov, "view2.bmp");
+	raytracer.render(width, height, eye2, view2, up, fov, "view2.bmp");
 	
 	return 0;
 }

@@ -128,6 +128,25 @@ Colour operator *(double s, const Colour& c);
 Colour operator +(const Colour& u, const Colour& v); 
 std::ostream& operator <<(std::ostream& o, const Colour& c); 
 
+class Texture {
+    public:
+        Texture(char * filename);
+        //~Texture() {
+            //delete[] r_data;
+            //delete[] b_data;
+            //delete[] g_data;
+        //}
+        Colour getCol(double x, double y);
+        
+        int width;
+        int height;
+
+    private:
+        unsigned char * rarray;
+        unsigned char * garray;
+        unsigned char * barray;
+};
+
 struct Material {
 	Material( Colour ambient, Colour diffuse, Colour specular, double exp ) :
 		ambient(ambient), diffuse(diffuse), specular(specular), 
@@ -168,6 +187,9 @@ struct Material {
     bool clear;
     Colour transparency;
     double n;
+
+    // Textures
+    Texture * diffuse_texture;
 };
 
 struct Intersection {
@@ -195,17 +217,20 @@ struct Ray3D {
 		intersection.none = true; 
         reflectCount=2;
         refractCount = 2;
+        inside = 0;
 	}
 	Ray3D( Point3D p, Vector3D v ) : origin(p), dir(v) {
 		intersection.none = true;
         reflectCount=2;
         refractCount = 2;
+        inside = 0;
 	}
 
 	Ray3D( Point3D p, Vector3D v , int reflectCount, int refractCount) 
         : origin(p), dir(v), reflectCount(reflectCount), 
         refractCount(refractCount) {
 		intersection.none = true;
+        inside = 0;
 	}
 	// Origin and direction of the ray.
 	Point3D origin;
@@ -217,9 +242,13 @@ struct Ray3D {
 	// function.
 	Colour col;
 
+    // keep track of how many reflects left
     int reflectCount;
 
+    // keep track of how many refracts left
     int refractCount;
+    // keep track of if inside clear object
+    bool inside;
 };
 
 struct TriangleFace {

@@ -9,7 +9,11 @@
 ***********************************************************/
 
 #include <cmath>
+#include <fstream>
+#include "bmp_io.h"
 #include "util.h"
+
+using namespace std;
 
 Point3D::Point3D() {
 	m_data[0] = 0.0;
@@ -250,6 +254,32 @@ Colour operator +(const Colour& u, const Colour& v)
 std::ostream& operator <<(std::ostream& s, const Colour& c)
 {
   return s << "c(" << c[0] << "," << c[1] << "," << c[2] << ")";
+}
+
+Texture::Texture(char * filename)
+{
+    // Read the file
+    unsigned long int width;
+    long int height;
+    if (bmp_read(filename, &width, &height, 
+            &(this->rarray), &(this->garray), &(this->barray))) {
+        cout << "error: could not read " << filename << "\n";
+    }
+
+    // save the width and height values
+    this->width = width;
+    this->height = height;
+}
+
+Colour Texture::getCol(double x, double y) {
+    int i = width * x;
+    int j = height * y;
+
+    double r = rarray[i*width + j];
+    double g = garray[i*width + j];
+    double b = barray[i*width + j];
+
+    return Colour(r, g, b);
 }
 
 Vector4D::Vector4D() {
