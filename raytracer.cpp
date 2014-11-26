@@ -245,7 +245,7 @@ Colour Raytracer::shadeRay( Ray3D& ray ) {
 
             Vector3D reflectDir = dir - ( normal.dot(dir) * 2 * normal);
 
-            Ray3D reflectRay(ray.intersection.point, reflectDir, 
+            Ray3D reflectRay(ray.intersection.point + 1e-6 * reflectDir, reflectDir, 
                     ray.reflectCount - 1, ray.refractCount);
 
             col = 
@@ -308,7 +308,7 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 	initPixelBuffer();
 	viewToWorld = initInvViewMatrix(eye, view, up);
 
-    const int nAA = 3;
+    const int nAA = 1;
     double AA_increment = 0.5 / factor / nAA;
     double AA_start = -0.5 / factor / nAA / 2 + AA_increment / 2;
 
@@ -414,17 +414,17 @@ int main(int argc, char* argv[])
 	//SceneDagNode* sphere = raytracer.addObject( new UnitSphere(), &gold );
 	//SceneDagNode* sphere2 = raytracer.addObject( new UnitSphere(), &jade );
 	//SceneDagNode* circle = raytracer.addObject( new UnitCircle(), &gold );
-	SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
-	SceneDagNode* glassSphere = raytracer.addObject( new UnitSphere(), &glass );
+	//SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
+	//SceneDagNode* glassSphere = raytracer.addObject( new UnitSphere(), &glass );
 	//SceneDagNode* mirrorSquare = raytracer.addObject( new UnitSquare(), &mirror );
 	//SceneDagNode* cylinder = raytracer.addObject( new UnitCylinder(), &gold );
 
-	SceneDagNode* redSphere = raytracer.addObject( new UnitSphere(), &red );
-	SceneDagNode* blueSphere = raytracer.addObject( new UnitSphere(), &blue );
-	SceneDagNode* greenSphere = raytracer.addObject( new UnitSphere(), &green );
-	SceneDagNode* whiteSphere = raytracer.addObject( new UnitSphere(), &white );
+	//SceneDagNode* redSphere = raytracer.addObject( new UnitSphere(), &red );
+	//SceneDagNode* blueSphere = raytracer.addObject( new UnitSphere(), &blue );
+	//SceneDagNode* greenSphere = raytracer.addObject( new UnitSphere(), &green );
+	//SceneDagNode* whiteSphere = raytracer.addObject( new UnitSphere(), &white );
 
-
+	//SceneDagNode* cow = raytracer.addObject( new Mesh("obj/cube.obj"), &mirror );
 	SceneDagNode* cow = raytracer.addObject( new Mesh("obj/cow-nonormals.obj"), &red );
 	
 	// Apply some transformations to the unit square.
@@ -439,6 +439,10 @@ int main(int argc, char* argv[])
     raytracer.rotate(checker, 'x', -90);
     raytracer.translate(checker, Vector3D(0, 0,-1));
 
+    raytracer.translate(cow, Vector3D(0, -1, -7));
+    //raytracer.rotate(cow, 'x', -45);
+    //raytracer.rotate(cow, 'z', -45);
+
     //raytracer.translate(mirrorSquare, Vector3D(0, -1, -8));
     //raytracer.scale(mirrorSquare, Point3D(0, 0, 0), factor2);
     //raytracer.scale(mirrorSquare, Point3D(0, 0, 0), factor2);
@@ -447,11 +451,11 @@ int main(int argc, char* argv[])
 
 	//raytracer.translate(sphere2, Vector3D(2, -0.5, -3));	
 
-    raytracer.translate(mirrorSphere, Vector3D(1.5, 0, -4));
-    raytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
+    //raytracer.translate(mirrorSphere, Vector3D(1.5, 0, -4));
+    //raytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
 
-    raytracer.translate(glassSphere, Vector3D(0, 0, -2));
-    raytracer.scale(glassSphere, Point3D(0, 0, 0), factor3);
+    //raytracer.translate(glassSphere, Vector3D(0, 0, -2));
+    //raytracer.scale(glassSphere, Point3D(0, 0, 0), factor3);
 
     //raytracer.translate(circle, Vector3D(0, 1, -3));
 
@@ -459,10 +463,10 @@ int main(int argc, char* argv[])
     //raytracer.rotate(cylinder, 'y', -45);
     //raytracer.rotate(cylinder, 'x', -45);
 
-    raytracer.translate( redSphere, Vector3D(3, -1, -2));
-    raytracer.translate( blueSphere, Vector3D(-3, -1, -2));
-    raytracer.translate( greenSphere, Vector3D(3, -1, -7));
-    raytracer.translate( whiteSphere, Vector3D(-3, -1, -7));
+    //raytracer.translate( redSphere, Vector3D(3, -1, -2));
+    //raytracer.translate( blueSphere, Vector3D(-3, -1, -2));
+    //raytracer.translate( greenSphere, Vector3D(3, -1, -7));
+    //raytracer.translate( whiteSphere, Vector3D(-3, -1, -7));
 
 	// Render the scene, feel free to make the image smaller for
 	// testing purposes.	
@@ -471,7 +475,7 @@ int main(int argc, char* argv[])
 	// Render it from a different point of view.
 	Point3D eye2(0, 3, -3);
 	Vector3D view2(0, -3, -3);
-	raytracer.render(width, height, eye2, view2, up, fov, "view2.bmp");
+	//raytracer.render(width, height, eye2, view2, up, fov, "view2.bmp");
 	
 	return 0;
 }

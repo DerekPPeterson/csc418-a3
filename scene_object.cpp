@@ -64,7 +64,8 @@ bool Checkerboard::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     obRay.origin = worldToModel * ray.origin;
     obRay.dir    = worldToModel * ray.dir;
 
-    Intersection intersection = rayPlaneIntersect(obRay, Point3D(0, 0, 0), Vector3D(0, 0, 1), checkerBounds);
+    Intersection intersection = rayPlaneIntersect(obRay, Point3D(0.0, 0.0, 0.0), 
+            Vector3D(0, 0, 1), checkerBounds);
     if (intersection.none) {
         return false;
     }
@@ -94,7 +95,8 @@ bool UnitSquare::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     obRay.origin = worldToModel * ray.origin;
     obRay.dir    = worldToModel * ray.dir;
 
-    Intersection intersection = rayPlaneIntersect(obRay, Point3D(0, 0, 0), Vector3D(0, 0, 1), squareBounds);
+    Intersection intersection = rayPlaneIntersect(obRay, Point3D(0, 0, 0), 
+            Vector3D(0, 0, 1), squareBounds);
     if (intersection.none) {
         return false;
     }
@@ -194,7 +196,8 @@ bool UnitCircle::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     obRay.origin = worldToModel * ray.origin;
     obRay.dir    = worldToModel * ray.dir;
 
-    Intersection intersection = rayPlaneIntersect(obRay, Point3D(0, 0, 0), Vector3D(0, 0, 1), circleBounds);
+    Intersection intersection = rayPlaneIntersect(obRay, Point3D(0, 0, 0), 
+            Vector3D(0, 0, 1), circleBounds);
     if (intersection.none) {
         return false;
     }
@@ -281,8 +284,10 @@ bool UnitCylinder::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     }
 
     // check top and bottom
-    Intersection topIntersection = rayPlaneIntersect(obRay, Point3D(0, 0, 0.5), Vector3D(0, 0, 1), circleBounds);
-    Intersection bottomIntersection = rayPlaneIntersect(obRay, Point3D(0, 0, -0.5), Vector3D(0, 0, -1), circleBounds);
+    Intersection topIntersection = rayPlaneIntersect(obRay, Point3D(0, 0, 0.5), 
+            Vector3D(0, 0, 1), circleBounds);
+    Intersection bottomIntersection = rayPlaneIntersect(obRay, 
+            Point3D(0, 0, -0.5), Vector3D(0, 0, -1), circleBounds);
     bottomIntersection.normal = Vector3D(0, 0, -1);
 
     Intersection intersection = sideIntersection;
@@ -328,18 +333,19 @@ bool Mesh::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     intersection.none = true;
 
     faces = this->faces;
-    TriangleFace * face = faces;
-    while (face != NULL) {
+    for (int i = 0; i < this->nFaces; i++) {
+        TriangleFace face = faces[i];
+
         // Need to pass triangle points into the bounds function, so have to 
         // do the plane boundry checking outside
-        Intersection faceIntersect = rayPlaneIntersect(obRay, face->points[0],
-                face->normal, fullPlane);
-        intersection.none = true;
+        Intersection faceIntersect = rayPlaneIntersect(obRay, face.points[0],
+                face.normal, fullPlane);
+        faceIntersect.none = true;
 
         // Test if point is inside the triangle using barycentric coordinates
-        Vector3D u = face->points[1] - face->points[0];
-        Vector3D v = face->points[2] - face->points[0];
-        Vector3D w = faceIntersect.point - face->points[0];
+        Vector3D u = face.points[1] - face.points[0];
+        Vector3D v = face.points[2] - face.points[0];
+        Vector3D w = faceIntersect.point - face.points[0];
 
         // Precompute cross products
         Vector3D vcw = v.cross(w);
@@ -354,25 +360,29 @@ bool Mesh::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
             continue;
         }
 
+        Vector3D x = faceIntersect.point-face.points[0];
+
         // Magintudes of parameters
-        double den = ucv.dot(ucv);
-        double r = vcw.dot(vcw) / den;
-        double t = ucw.dot(ucw) / den;
-        if (! (r < 1 && t < 1) ) {
+        double den = sqrt(ucv.dot(ucv));
+        double r = sqrt(vcw.dot(vcw)) / den;
+        double t = sqrt(ucw.dot(ucw)) / den;
+        if (! (r + t <= 1) ) {
             continue;
         }
 
-        intersection.none = true;
-
+        faceIntersect.none = false;
         intersection = chooseIntersection(intersection, faceIntersect);
-
-        face++;
     }
 
     if (intersection.none) {
         return false;
     }
 
+    // convert back to world space
+    ray.intersection.none = false;
+    ray.intersection.point = modelToWorld * intersection.point;
+    ray.intersection.normal = transNorm(worldToModel, intersection.normal);
+    ray.intersection.t_value = intersection.t_value;
 
 	return true;
 }

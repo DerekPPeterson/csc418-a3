@@ -57,7 +57,7 @@ class Mesh : public SceneObject {
 public:
     Mesh(char * obj_filename)
     {
-        nFaces = read_obj(obj_filename, faces);
+        faces = read_obj(obj_filename, &nFaces);
     };
     ~Mesh() {
         delete(faces);

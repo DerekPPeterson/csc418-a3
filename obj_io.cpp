@@ -15,6 +15,11 @@ Point3D parse_vertex(string line)
 
     for (int i = 0; i < 3; i++) {
         int pos2 = line.find(" ", pos + 1);
+        if (line[pos2 + 1] == ' ') {
+            pos++;
+            i--;
+            continue;
+        }
         string num = line.substr(pos + 1, pos2 - pos);
         vertex[i] = stod(num);
         pos = pos2;
@@ -32,8 +37,13 @@ TriangleFace parse_face(string line, Point3D * vertices)
 
     for (int i = 0; i < 3; i++) {
         int pos2 = line.find(" ", pos + 1);
+        if (line[pos2 + 1] == ' ') {
+            pos++;
+            i--;
+            continue;
+        }
         string num = line.substr(pos + 1, pos2 - pos);
-        face.points[i] = vertices[ stoi(num) ];
+        face.points[i] = vertices[ stoi(num) - 1];
         pos = pos2;
     }
 
@@ -45,7 +55,7 @@ TriangleFace parse_face(string line, Point3D * vertices)
     return face;
 }
 
-int read_obj(const char * filename, TriangleFace *faces)
+TriangleFace* read_obj(const char * filename, int * npFaces)
 {
     // Open file
     ifstream obj_file(filename);
@@ -53,40 +63,53 @@ int read_obj(const char * filename, TriangleFace *faces)
         cout << "error: could not open " << filename << "\n";
     }
 
-    int bufsize = 1024;
-    Point3D * vertices = new Point3D [bufsize];
-    faces = new TriangleFace [bufsize];
+    int vbufsize = 1024;
+    int fbufsize = 1024;
+    Point3D * vertices = new Point3D [vbufsize];
+    TriangleFace * faces = new TriangleFace [fbufsize];
 
     // Parse vertices and faces
     string line;
     int nVertices = 0;
     int nFaces = 0;
     while (getline(obj_file, line)) {
-        switch (line[0]) {
-            case 'v':
-                vertices[nVertices] = parse_vertex(line);
-                nVertices++;
-            case 'f':
-                faces[nFaces] = parse_face(line, vertices);
-                nFaces++;
+        if (line[0] == 'v') {
+            vertices[nVertices] = parse_vertex(line);
+            nVertices++;
+        } else if (line[0] == 'f') {
+            faces[nFaces] = parse_face(line, vertices);
+            nFaces++;
+        } else {
+            continue;
         }
 
         // expand buffers if needed
-        if (nVertices > bufsize) {
-            bufsize *= 2;
-            Point3D * new_vertices = new Point3D [bufsize];
-            copy(vertices, vertices + bufsize / 2, new_vertices);
-            delete(vertices);
+        if (nVertices == vbufsize) {
+            vbufsize *= 2;
+            Point3D * new_vertices = new Point3D [vbufsize];
+            copy(vertices, vertices + vbufsize / 2, new_vertices);
+            delete[] vertices;
             vertices = new_vertices;
         }
-        if (nFaces > bufsize) {
-            bufsize *= 2;
-            TriangleFace * new_faces = new TriangleFace [bufsize];
-            copy(faces, faces + bufsize / 2, new_faces);
-            delete(faces);
+        if (nFaces == fbufsize) {
+            fbufsize *= 2;
+            TriangleFace * new_faces = new TriangleFace [fbufsize];
+            copy(faces, faces + fbufsize / 2, new_faces);
+            delete[] faces;
             faces = new_faces;
         }
     }
-    delete vertices;
-    return nFaces;
+    delete[] vertices;
+
+    //cout << nFaces << "\n\n";
+    //for (int i=0; i < nFaces; i++) {
+        //cout << "face " << i << "\n";
+        //cout << faces[i].points[0] << "\n";
+        //cout << faces[i].points[1] << "\n";
+        //cout << faces[i].points[2] << "\n";
+        //cout << faces[i].normal << "\n";
+    //}
+
+    *npFaces = nFaces;
+    return faces;
 }

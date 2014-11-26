@@ -2,7 +2,7 @@
 
 #include "util.h"
 
-int read_obj(const char * filename, TriangleFace * faces);
+TriangleFace *read_obj(const char * filename, int * npFaces);
 
 #endif
 #define __OBJ_IO__
