@@ -272,12 +272,13 @@ Texture::Texture(char * filename)
 }
 
 Colour Texture::getCol(double x, double y) {
+    //cout << x << " " << y << "\n";
     int i = width * x;
     int j = height * y;
 
-    double r = rarray[i*width + j];
-    double g = garray[i*width + j];
-    double b = barray[i*width + j];
+    double r = rarray[j*width + i] / 255.0;
+    double g = garray[j*width + i] / 255.0;
+    double b = barray[j*width + i] / 255.0;
 
     return Colour(r, g, b);
 }

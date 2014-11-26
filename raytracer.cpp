@@ -199,7 +199,17 @@ void Raytracer::computeShading( Ray3D& ray ) {
 
         ray.intersection.shadow = (!shadowRay.intersection.none);
 
+        // actually shade
         curLight->light->shade(ray);
+
+        // Texture
+        if (ray.intersection.mat->texture != NULL && ray.intersection.canTexture) {
+            //cout << ray.col << "\n";
+            ray.col = ray.col * ray.intersection.mat->texture->getCol(
+                    ray.intersection.tex_x, ray.intersection.tex_y);
+            //cout << ray.col << "\n";
+        }
+
         curLight = curLight->next;
 	}
 }
@@ -369,10 +379,6 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 
 int main(int argc, char* argv[])
 {	
-    Texture test = Texture("./textures/earth-1024x512.bmp");
-    cout << test.getCol(0, 0.5);
-    return 0;
-
 
 	// Build your scene and setup your camera here, by calling 
 	// functions from Raytracer.  The code here sets up an example
@@ -415,6 +421,10 @@ int main(int argc, char* argv[])
     Material green( Colour(0, 0.3, 0), Colour(0, 0.7, 0), Colour(0, 0.2, 0), 10);
     Material white( Colour(0.3, 0.3, 0.3), Colour(0.7, 0.7, 0.7), Colour(0.2, 0.2, 0.2), 10);
 
+    Material worldMat( Colour(0.3, 0.3, 0.3), Colour(0.7, 0.7, 0.7), Colour(0.2, 0.2, 0.2), 10);
+    Texture earthTex = Texture("./textures/earth-1024x512.bmp");
+    worldMat.texture = &earthTex;
+
 	// Defines a point light source.
 	raytracer.addLightSource( new PointLight(Point3D(0, 6, 0), 
 				Colour(0.9, 0.9, 0.9) ) );
@@ -435,8 +445,9 @@ int main(int argc, char* argv[])
 	//SceneDagNode* greenSphere = raytracer.addObject( new UnitSphere(), &green );
 	//SceneDagNode* whiteSphere = raytracer.addObject( new UnitSphere(), &white );
 
-	SceneDagNode* cube = raytracer.addObject( new Mesh("obj/cube.obj"), &mirror );
+	//SceneDagNode* cube = raytracer.addObject( new Mesh("obj/cube.obj"), &mirror );
 	//SceneDagNode* cow = raytracer.addObject( new Mesh("obj/cow-nonormals.obj"), &mirror );
+	SceneDagNode* picture = raytracer.addObject( new UnitSquare(), &worldMat );
 	
 	// Apply some transformations to the unit square.
 	double factor1[3] = { 1.0, 2.0, 1.0 };
@@ -450,11 +461,14 @@ int main(int argc, char* argv[])
     raytracer.rotate(checker, 'x', -90);
     raytracer.translate(checker, Vector3D(0, 0,-1));
 
+    raytracer.translate(picture, Vector3D(0, 0, -1));
+    raytracer.scale(picture, Point3D(0, 0, 0), factor3);
+
     //raytracer.translate(cow, Vector3D(0, -1, -7));
     //raytracer.rotate(cow, 'x', -45);
     //raytracer.rotate(cow, 'z', -45);
 
-    raytracer.translate(cube, Vector3D(0, -1, -3));
+    //raytracer.translate(cube, Vector3D(0, -1, -3));
     //raytracer.rotate(cube, 'x', -45);
     //raytracer.rotate(cube, 'z', -45);
 
@@ -490,7 +504,7 @@ int main(int argc, char* argv[])
 	// Render it from a different point of view.
 	Point3D eye2(0, 3, -3);
 	Vector3D view2(0, -3, -3);
-	raytracer.render(width, height, eye2, view2, up, fov, "view2.bmp");
+	//raytracer.render(width, height, eye2, view2, up, fov, "view2.bmp");
 	
 	return 0;
 }

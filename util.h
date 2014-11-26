@@ -154,6 +154,7 @@ struct Material {
     {
         reflects = false;
         clear = false;
+        texture = NULL;
     }
 
 	Material( Colour ambient, Colour diffuse, Colour specular, double exp ,
@@ -162,14 +163,18 @@ struct Material {
 		specular_exp(exp), reflects(reflects), reflective(reflective)
     {
         clear = false;
+        texture = NULL;
     }
 
 	Material( Colour ambient, Colour diffuse, Colour specular, double exp ,
         bool reflects, Colour reflective, bool clear, Colour transparency, double n) :
 		ambient(ambient), diffuse(diffuse), specular(specular), 
 		specular_exp(exp), reflects(reflects), reflective(reflective),
-        clear(clear), transparency(transparency), n(n) {}
-	
+        clear(clear), transparency(transparency), n(n) 
+    {
+        texture = NULL;
+    }
+
 	// Ambient components for Phong shading.
 	Colour ambient; 
 	// Diffuse components for Phong shading.
@@ -189,7 +194,7 @@ struct Material {
     double n;
 
     // Textures
-    Texture * diffuse_texture;
+    Texture * texture;
 };
 
 struct Intersection {
@@ -209,18 +214,25 @@ struct Intersection {
 
     //set to true if in a shadow
     bool shadow;
+
+    // Texture coordinates
+    bool canTexture;
+    double tex_x;
+    double tex_y;
 };
 
 // Ray structure. 
 struct Ray3D {
 	Ray3D() {
 		intersection.none = true; 
+		intersection.canTexture = false; 
         reflectCount=2;
         refractCount = 2;
         inside = 0;
 	}
 	Ray3D( Point3D p, Vector3D v ) : origin(p), dir(v) {
 		intersection.none = true;
+		intersection.canTexture = false; 
         reflectCount=2;
         refractCount = 2;
         inside = 0;
@@ -230,6 +242,7 @@ struct Ray3D {
         : origin(p), dir(v), reflectCount(reflectCount), 
         refractCount(refractCount) {
 		intersection.none = true;
+		intersection.canTexture = false; 
         inside = 0;
 	}
 	// Origin and direction of the ray.

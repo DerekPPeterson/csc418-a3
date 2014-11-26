@@ -107,6 +107,11 @@ bool UnitSquare::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
             && intersection.t_value > ray.intersection.t_value)) {
         return false;
     }
+    
+    // make texture mapping
+    ray.intersection.canTexture = true;
+    ray.intersection.tex_x = intersection.point[0] + 0.5;
+    ray.intersection.tex_y = intersection.point[1] + 0.5;
 
     // convert back to world space
     ray.intersection.none = false;

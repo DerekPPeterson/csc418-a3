@@ -1,5 +1,5 @@
 CC = g++
-CPPFLAGS = -g -std=c++11
+CPPFLAGS = -g -O2 -std=c++11
 LIBS = -lm
 
 raytracer:  raytracer.o util.o light_source.o scene_object.o bmp_io.o obj_io.o
