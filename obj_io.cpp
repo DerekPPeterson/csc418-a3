@@ -19,8 +19,10 @@ Point3D parse_vertex(string line)
             pos++;
             i--;
             continue;
+        } else if (pos2 < 0) {
+            pos2 = line.length();
         }
-        string num = line.substr(pos + 1, pos2 - pos);
+        string num = line.substr(pos + 1, pos2 - pos - 1);
         vertex[i] = stod(num);
         pos = pos2;
     }
@@ -36,15 +38,17 @@ TriangleFace parse_face(string line, Point3D * vertices)
     TriangleFace face;
 
     for (int i = 0; i < 3; i++) {
-        int pos2 = line.find(" ", pos + 1);
+        int pos2 = line.find_first_of(" /", pos + 1);
         if (line[pos2 + 1] == ' ') {
             pos++;
             i--;
             continue;
+        } else if (pos2 == -1) {
+            pos2 = line.length();
         }
-        string num = line.substr(pos + 1, pos2 - pos);
+        string num = line.substr(pos + 1, pos2 - pos - 1);
         face.points[i] = vertices[ stoi(num) - 1];
-        pos = pos2;
+        pos = line.find_first_of(" ", pos + 1);
     }
 
     face.normal = 
@@ -73,10 +77,10 @@ TriangleFace* read_obj(const char * filename, int * npFaces)
     int nVertices = 0;
     int nFaces = 0;
     while (getline(obj_file, line)) {
-        if (line[0] == 'v') {
+        if (line[0] == 'v' && line[1] == ' ') {
             vertices[nVertices] = parse_vertex(line);
             nVertices++;
-        } else if (line[0] == 'f') {
+        } else if (line[0] == 'f' && line[1] == ' ') {
             faces[nFaces] = parse_face(line, vertices);
             nFaces++;
         } else {

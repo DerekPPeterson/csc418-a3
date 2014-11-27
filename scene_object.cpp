@@ -348,6 +348,10 @@ bool Mesh::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     for (int i = 0; i < this->nFaces; i++) {
         TriangleFace face = faces[i];
 
+//        cout << face.points[0] << "\n";
+//        cout << face.points[1] << "\n";
+//        cout << face.points[2] << "\n\n";
+
         // Need to pass triangle points into the bounds function, so have to 
         // do the plane boundry checking outside
         Intersection faceIntersect = rayPlaneIntersect(obRay, face.points[0],
