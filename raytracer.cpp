@@ -204,10 +204,8 @@ void Raytracer::computeShading( Ray3D& ray ) {
 
         // Texture
         if (ray.intersection.mat->texture != NULL && ray.intersection.canTexture) {
-            //cout << ray.col << "\n";
             ray.col = ray.col * ray.intersection.mat->texture->getCol(
                     ray.intersection.tex_x, ray.intersection.tex_y);
-            //cout << ray.col << "\n";
         }
 
         curLight = curLight->next;
@@ -324,56 +322,54 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 	initPixelBuffer();
 	viewToWorld = initInvViewMatrix(eye, view, up);
 
-#if 0
-    // Grid AA
-    const int nAA_x;
-    const int nAA = nAA_X ** 2;
-    double AA_increment = 0.5 / factor / nAA_x;
-    double AA_start = -0.5 / factor / nAA_x / 2 + AA_increment / 2;
 
-    Vector3D AA_offsets[nAA];
-    for (int i=0; i < nAA_x; i++) {
-        for (int j=0; j < nAA_x; j++) {
-            AA_offsets[nAA*i + j][0] = AA_start + AA_increment * i;
-            AA_offsets[nAA*i + j][1] = AA_start + AA_increment * j;
-            AA_offsets[nAA*i + j][2] = 0;
-        }
-    }
-#else
+   // DOF
+   const int nDOF = 4;
+   const double aperture = 0.05;
+   const double focal_length = 6;
+   
    // Random AA
-   const int nAA = 3;
-   double AA_max = 0.5 / factor;
-    Vector3D AA_offsets[nAA];
-    for (int i=0; i < nAA; i++) {
-        AA_offsets[i][0] = (double(RAND_MAX) / double(rand())) * AA_max;
-        AA_offsets[i][1] = (double(RAND_MAX) / double(rand())) * AA_max;
-        AA_offsets[i][2] = (double(RAND_MAX) / double(rand())) * AA_max;
-    }
-#endif
+   const int nAA = 4;
+   double AA_max = 1.0 / factor;
 
 	// Construct a ray for each pixel.
     long total = _scrHeight * _scrWidth;
 	for (int i = 0; i < _scrHeight; i++) {
 		for (int j = 0; j < _scrWidth; j++) {
-			Point3D origin(0, 0, 0);
 			Point3D imagePlane;
-			imagePlane[0] = (-double(width)/2 + 0.5 + j)/factor;
-			imagePlane[1] = (-double(height)/2 + 0.5 + i)/factor;
-			imagePlane[2] = -1;
+			imagePlane[0] = (-double(width)/2 + 0.5 + j)/factor * focal_length;
+			imagePlane[1] = (-double(height)/2 + 0.5 + i)/factor * focal_length;
+			imagePlane[2] = -focal_length;
 
-            
             Colour col(0, 0, 0);
             for (int k=0; k < nAA; k++) {
-                Point3D rayTarget = imagePlane + AA_offsets[k];
-                Ray3D ray;
-                ray.origin = viewToWorld * origin;
-                ray.dir = viewToWorld * (rayTarget - origin);
-                ray.dir.normalize();
+                for (int w=0; w < nDOF; w++) {
 
-                col = col + shadeRay(ray);
+                    Vector3D AA_offset;
+                    AA_offset[0] = ((double) rand() / (RAND_MAX) - 0.5) * AA_max * focal_length;
+                    AA_offset[1] = ((double) rand() / (RAND_MAX) - 0.5) * AA_max * focal_length;
+                    AA_offset[2] = 0;
+                    Point3D rayTarget = imagePlane + AA_offset;
+
+                    Vector3D DOF_offset;
+                    double r2 = ((double) rand() / (RAND_MAX)) * aperture * aperture;
+                    double theta = ((double) rand() / (RAND_MAX)) * 2 * M_PI;
+                    DOF_offset[0] = sqrt(r2) * cos(theta);
+                    DOF_offset[1] = sqrt(r2) * sin(theta);
+                    DOF_offset[2] = 0;
+
+                    Ray3D ray;
+			        Point3D origin(0, 0, 0);
+                    origin = origin + DOF_offset;
+                    ray.origin = viewToWorld * origin;
+                    ray.dir = viewToWorld * (rayTarget - origin);
+                    ray.dir.normalize();
+
+                    col = col + shadeRay(ray);
+                }
             }
 
-            col = (1.0 / nAA) * col;
+            col = (1.0 / nAA / nDOF) * col;
 
 			_rbuffer[i*width+j] = int(col[0]*255);
 			_gbuffer[i*width+j] = int(col[1]*255);
@@ -449,8 +445,8 @@ int main(int argc, char* argv[])
 	//SceneDagNode* sphere = raytracer.addObject( new UnitSphere(), &gold );
 	//SceneDagNode* sphere2 = raytracer.addObject( new UnitSphere(), &jade );
 	//SceneDagNode* circle = raytracer.addObject( new UnitCircle(), &gold );
-	SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
-	SceneDagNode* glassSphere = raytracer.addObject( new UnitSphere(), &glass );
+	//SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
+	//SceneDagNode* glassSphere = raytracer.addObject( new UnitSphere(), &glass );
 	//SceneDagNode* mirrorSquare = raytracer.addObject( new UnitSquare(), &mirror );
 	//SceneDagNode* cylinder = raytracer.addObject( new UnitCylinder(), &gold );
 
@@ -507,11 +503,11 @@ int main(int argc, char* argv[])
 
 	//raytracer.translate(sphere2, Vector3D(2, -0.5, -3));	
 
-    raytracer.translate(mirrorSphere, Vector3D(1.3, 0, -2));
-    raytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
+    //raytracer.translate(mirrorSphere, Vector3D(1.3, 0, -2));
+    //raytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
 
-    raytracer.translate(glassSphere, Vector3D(-1.3, 0, -2));
-    raytracer.scale(glassSphere, Point3D(0, 0, 0), factor3);
+    //raytracer.translate(glassSphere, Vector3D(-1.3, 0, -2));
+    //raytracer.scale(glassSphere, Point3D(0, 0, 0), factor3);
 
     //raytracer.translate(circle, Vector3D(0, 1, -3));
 
@@ -519,10 +515,10 @@ int main(int argc, char* argv[])
     //raytracer.rotate(cylinder, 'y', -45);
     //raytracer.rotate(cylinder, 'x', -45);
 
-    raytracer.translate( redSphere, Vector3D(3, -1, -2));
-    raytracer.translate( blueSphere, Vector3D(-3, -1, -2));
-    raytracer.translate( greenSphere, Vector3D(3, -1, -7));
-    raytracer.translate( whiteSphere, Vector3D(-3, -1, -7));
+    raytracer.translate( redSphere, Vector3D(-1, 0, -3));
+    raytracer.translate( blueSphere, Vector3D(0, 0, -6));
+    raytracer.translate( greenSphere, Vector3D(1, 0, -9));
+    raytracer.translate( whiteSphere, Vector3D(2, 0, -12));
 
 	// Render the scene, feel free to make the image smaller for
 	// testing purposes.	
