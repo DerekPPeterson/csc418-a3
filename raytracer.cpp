@@ -421,7 +421,7 @@ int main(int argc, char* argv[])
     Material green( Colour(0, 0.3, 0), Colour(0, 0.7, 0), Colour(0, 0.2, 0), 10);
     Material white( Colour(0.3, 0.3, 0.3), Colour(0.7, 0.7, 0.7), Colour(0.2, 0.2, 0.2), 10);
 
-    Material worldMat( Colour(0.3, 0.3, 0.3), Colour(0.7, 0.7, 0.7), Colour(0.2, 0.2, 0.2), 10);
+    Material worldMat( Colour(0.6, 0.6, 0.6), Colour(0.7, 0.7, 0.7), Colour(0.2, 0.2, 0.2), 10);
     Texture earthTex = Texture("./textures/earth-1024x512.bmp");
     worldMat.texture = &earthTex;
 
@@ -435,7 +435,7 @@ int main(int argc, char* argv[])
 	//SceneDagNode* sphere = raytracer.addObject( new UnitSphere(), &gold );
 	//SceneDagNode* sphere2 = raytracer.addObject( new UnitSphere(), &jade );
 	//SceneDagNode* circle = raytracer.addObject( new UnitCircle(), &gold );
-	//SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
+	SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
 	//SceneDagNode* glassSphere = raytracer.addObject( new UnitSphere(), &glass );
 	//SceneDagNode* mirrorSquare = raytracer.addObject( new UnitSquare(), &mirror );
 	//SceneDagNode* cylinder = raytracer.addObject( new UnitCylinder(), &gold );
@@ -448,6 +448,7 @@ int main(int argc, char* argv[])
 	//SceneDagNode* cube = raytracer.addObject( new Mesh("obj/cube.obj"), &mirror );
 	//SceneDagNode* cow = raytracer.addObject( new Mesh("obj/cow-nonormals.obj"), &mirror );
 	SceneDagNode* picture = raytracer.addObject( new UnitSquare(), &worldMat );
+	SceneDagNode* globe = raytracer.addObject( new UnitSphere(), &worldMat );
 	
 	// Apply some transformations to the unit square.
 	double factor1[3] = { 1.0, 2.0, 1.0 };
@@ -461,8 +462,14 @@ int main(int argc, char* argv[])
     raytracer.rotate(checker, 'x', -90);
     raytracer.translate(checker, Vector3D(0, 0,-1));
 
-    raytracer.translate(picture, Vector3D(0, 0, -1));
+    raytracer.translate(picture, Vector3D(1, 0, -3));
     raytracer.scale(picture, Point3D(0, 0, 0), factor3);
+
+    raytracer.translate(globe, Vector3D(0, 0, -2));
+    //raytracer.rotate(globe, 'z', 180);
+    //raytracer.rotate(globe, 'y', 180);
+    raytracer.rotate(globe, 'x', 45);
+    raytracer.scale(globe, Point3D(0, 0, 0), factor3);
 
     //raytracer.translate(cow, Vector3D(0, -1, -7));
     //raytracer.rotate(cow, 'x', -45);
@@ -480,8 +487,9 @@ int main(int argc, char* argv[])
 
 	//raytracer.translate(sphere2, Vector3D(2, -0.5, -3));	
 
-    //raytracer.translate(mirrorSphere, Vector3D(1.5, 0, -4));
-    //raytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
+    //raytracer.translate(mirrorSphere, Vector3D(2.3, 0, -2));
+    raytracer.translate(mirrorSphere, Vector3D(-2.3, 0, -2));
+    raytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
 
     //raytracer.translate(glassSphere, Vector3D(0, 0, -2));
     //raytracer.scale(glassSphere, Point3D(0, 0, 0), factor3);

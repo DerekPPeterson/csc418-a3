@@ -136,7 +136,7 @@ bool UnitSphere::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     // Parameters TODO see wikipedia
     double a = obRay.dir.dot(obRay.dir);
     double b = 2 * obRay.dir.dot(rayOrginVec);
-    double c = rayOrginVec.dot(rayOrginVec) - 0.25;
+    double c = rayOrginVec.dot(rayOrginVec) - 0.5 * 0.5;
 
     // determin if intersection
     double det = b * b - 4 * a * c;
@@ -179,6 +179,13 @@ bool UnitSphere::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
 
         Vector3D normal = obRay.intersection.point - origin;
 
+        // Texturing
+        ray.intersection.canTexture = true;
+        ray.intersection.tex_x = 1 -0.5 - atan2(- obRay.intersection.point[2] * 2, 
+                - obRay.intersection.point[0] * 2) / 2 / M_PI;
+        ray.intersection.tex_y = 0.5 - asin(- obRay.intersection.point[1] * 2) / M_PI;
+
+        // Convert back to world space
         ray.intersection.none = false;
         ray.intersection.t_value = obRay.intersection.t_value;
         ray.intersection.point = modelToWorld * obRay.intersection.point;
