@@ -23,6 +23,9 @@ using namespace std;
 
 Raytracer::Raytracer() : _lightSource(NULL) {
 	_root = new SceneDagNode();
+
+    // set the default render options
+    setFeautures(1, 1, 0, 1, 2, 2);
 }
 
 Raytracer::~Raytracer() {
@@ -324,12 +327,12 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
 
 
    // DOF
-   const int nDOF = 4;
-   const double aperture = 0.05;
-   const double focal_length = 6;
+   const int nDOF = _nDOF;
+   const double aperture = _aperture;
+   const double focal_length = _focal_length;
    
    // Random AA
-   const int nAA = 4;
+   const int nAA = _nAA;
    double AA_max = 1.0 / factor;
 
 	// Construct a ray for each pixel.
@@ -345,25 +348,40 @@ void Raytracer::render( int width, int height, Point3D eye, Vector3D view,
             for (int k=0; k < nAA; k++) {
                 for (int w=0; w < nDOF; w++) {
 
-                    Vector3D AA_offset;
-                    AA_offset[0] = ((double) rand() / (RAND_MAX) - 0.5) * AA_max * focal_length;
-                    AA_offset[1] = ((double) rand() / (RAND_MAX) - 0.5) * AA_max * focal_length;
-                    AA_offset[2] = 0;
-                    Point3D rayTarget = imagePlane + AA_offset;
 
-                    Vector3D DOF_offset;
-                    double r2 = ((double) rand() / (RAND_MAX)) * aperture * aperture;
-                    double theta = ((double) rand() / (RAND_MAX)) * 2 * M_PI;
-                    DOF_offset[0] = sqrt(r2) * cos(theta);
-                    DOF_offset[1] = sqrt(r2) * sin(theta);
-                    DOF_offset[2] = 0;
+                    Point3D rayTarget;
+                    if (nAA > 1) {
+                        // calculate random AA offsets in the pixel
+                        Vector3D AA_offset;
+                        AA_offset[0] = ((double) rand() / (RAND_MAX) - 0.5) 
+                            * AA_max * focal_length;
+                        AA_offset[1] = ((double) rand() / (RAND_MAX) - 0.5) 
+                            * AA_max * focal_length;
+                        AA_offset[2] = 0;
+                        rayTarget = imagePlane + AA_offset;
+                    } else {
+                        rayTarget = imagePlane;
+                    }
+
+			        Point3D origin(0, 0, 0);
+                    if (nDOF > 1) {
+                        Vector3D DOF_offset;
+                        double r2 = ((double) rand() / (RAND_MAX)) 
+                            * aperture * aperture;
+                        double theta = ((double) rand() / (RAND_MAX)) * 2 * M_PI;
+                        DOF_offset[0] = sqrt(r2) * cos(theta);
+                        DOF_offset[1] = sqrt(r2) * sin(theta);
+                        DOF_offset[2] = 0;
+                        origin = origin + DOF_offset;
+                    }
 
                     Ray3D ray;
-			        Point3D origin(0, 0, 0);
-                    origin = origin + DOF_offset;
+                    origin = origin;
                     ray.origin = viewToWorld * origin;
                     ray.dir = viewToWorld * (rayTarget - origin);
                     ray.dir.normalize();
+                    ray.reflectCount = _reflect_depth;
+                    ray.refractCount = _reflect_depth;
 
                     col = col + shadeRay(ray);
                 }
@@ -423,7 +441,7 @@ int main(int argc, char* argv[])
 
     Material glass(Colour(0.03, 0.03, 0.03), Colour(0, 0, 0), 
             Colour(1, 1, 1), 100,
-            false, Colour(0.05, 0.05, 0.05), 
+            true, Colour(0.05, 0.05, 0.05), 
             true, Colour(0.9, 0.9, 0.9), 1.3);
 
     Material red( Colour(0.3, 0, 0), Colour(0.7, 0, 0), Colour(0.2, 0, 0), 10);
@@ -445,22 +463,22 @@ int main(int argc, char* argv[])
 	//SceneDagNode* sphere = raytracer.addObject( new UnitSphere(), &gold );
 	//SceneDagNode* sphere2 = raytracer.addObject( new UnitSphere(), &jade );
 	//SceneDagNode* circle = raytracer.addObject( new UnitCircle(), &gold );
-	//SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
-	//SceneDagNode* glassSphere = raytracer.addObject( new UnitSphere(), &glass );
+	SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
+	SceneDagNode* glassSphere = raytracer.addObject( new UnitSphere(), &glass );
 	//SceneDagNode* mirrorSquare = raytracer.addObject( new UnitSquare(), &mirror );
-	//SceneDagNode* cylinder = raytracer.addObject( new UnitCylinder(), &gold );
+	SceneDagNode* cylinder = raytracer.addObject( new UnitCylinder(), &gold );
 
 	SceneDagNode* redSphere = raytracer.addObject( new UnitSphere(), &red );
 	SceneDagNode* blueSphere = raytracer.addObject( new UnitSphere(), &blue );
 	SceneDagNode* greenSphere = raytracer.addObject( new UnitSphere(), &green );
 	SceneDagNode* whiteSphere = raytracer.addObject( new UnitSphere(), &white );
 
-	//SceneDagNode* cube = raytracer.addObject( new Mesh("obj/cube.obj"), &mirror );
+	SceneDagNode* cube = raytracer.addObject( new Mesh("obj/cube.obj"), &gold );
 	//SceneDagNode* cow = raytracer.addObject( new Mesh("obj/cow-nonormals.obj"), &mirror );
 //	SceneDagNode* crab = raytracer.addObject( new Mesh("obj/crab.obj"), &red );
 
 //	SceneDagNode* picture = raytracer.addObject( new UnitSquare(), &worldMat );
-//	SceneDagNode* globe = raytracer.addObject( new UnitSphere(), &worldMat );
+	SceneDagNode* globe = raytracer.addObject( new UnitSphere(), &worldMat );
 	
 	// Apply some transformations to the unit square.
 	double factor1[3] = { 1.0, 2.0, 1.0 };
@@ -480,20 +498,20 @@ int main(int argc, char* argv[])
 //    raytracer.translate(picture, Vector3D(1, 0, -3));
 //    raytracer.scale(picture, Point3D(0, 0, 0), factor3);
 
-//    raytracer.translate(globe, Vector3D(0, 0, -2));
+    raytracer.translate(globe, Vector3D(0, 1.5, -3));
     //raytracer.rotate(globe, 'z', 180);
-    //raytracer.rotate(globe, 'y', 180);
-//    raytracer.rotate(globe, 'x', 45);
-//    raytracer.scale(globe, Point3D(0, 0, 0), factor3);
+    raytracer.rotate(globe, 'y', 180);
+    //raytracer.rotate(globe, 'x', 45);
+    raytracer.scale(globe, Point3D(0, 0, 0), factor3);
 
 
     //raytracer.translate(cow, Vector3D(0, -1, -7));
     //raytracer.rotate(cow, 'x', -45);
     //raytracer.rotate(cow, 'z', -45);
 
-    //raytracer.translate(cube, Vector3D(0, -1, -3));
-    //raytracer.rotate(cube, 'x', -45);
-    //raytracer.rotate(cube, 'z', -45);
+    raytracer.translate(cube, Vector3D(-2.5, 1.5, -3));
+    raytracer.rotate(cube, 'x', -45);
+    raytracer.rotate(cube, 'z', -45);
 
     //raytracer.translate(mirrorSquare, Vector3D(0, -1, -8));
     //raytracer.scale(mirrorSquare, Point3D(0, 0, 0), factor2);
@@ -503,17 +521,17 @@ int main(int argc, char* argv[])
 
 	//raytracer.translate(sphere2, Vector3D(2, -0.5, -3));	
 
-    //raytracer.translate(mirrorSphere, Vector3D(1.3, 0, -2));
-    //raytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
+    raytracer.translate(mirrorSphere, Vector3D(-3, 0, -3));
+    raytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
 
-    //raytracer.translate(glassSphere, Vector3D(-1.3, 0, -2));
-    //raytracer.scale(glassSphere, Point3D(0, 0, 0), factor3);
+    raytracer.translate(glassSphere, Vector3D(3, 0, -3));
+    raytracer.scale(glassSphere, Point3D(0, 0, 0), factor3);
 
     //raytracer.translate(circle, Vector3D(0, 1, -3));
 
-    //raytracer.translate(cylinder, Vector3D(0, 0, -3));
-    //raytracer.rotate(cylinder, 'y', -45);
-    //raytracer.rotate(cylinder, 'x', -45);
+    raytracer.translate(cylinder, Vector3D(2, 1.5, -3));
+    raytracer.rotate(cylinder, 'y', -45);
+    raytracer.rotate(cylinder, 'x', -45);
 
     raytracer.translate( redSphere, Vector3D(-1, 0, -3));
     raytracer.translate( blueSphere, Vector3D(0, 0, -6));

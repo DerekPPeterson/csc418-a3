@@ -228,14 +228,14 @@ struct Ray3D {
 		intersection.canTexture = false; 
         reflectCount=2;
         refractCount = 2;
-        inside = 0;
+        inside = false;
 	}
 	Ray3D( Point3D p, Vector3D v ) : origin(p), dir(v) {
 		intersection.none = true;
 		intersection.canTexture = false; 
         reflectCount=2;
         refractCount = 2;
-        inside = 0;
+        inside = false;
 	}
 
 	Ray3D( Point3D p, Vector3D v , int reflectCount, int refractCount) 
@@ -243,7 +243,7 @@ struct Ray3D {
         refractCount(refractCount) {
 		intersection.none = true;
 		intersection.canTexture = false; 
-        inside = 0;
+        inside = false;
 	}
 	// Origin and direction of the ray.
 	Point3D origin;

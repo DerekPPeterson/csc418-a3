@@ -98,6 +98,18 @@ public:
 
 	// Apply scaling about a fixed point origin.
 	void scale( SceneDagNode* node, Point3D origin, double factor[3] );
+
+    // Set the enabled feautures
+    void setFeautures(int nAA, int nDOF, double aperture, double focal_length, 
+            int refract_depth, int reflect_depth) 
+    {
+        _nAA = nAA;
+        _nDOF = nDOF;
+        _aperture = aperture;
+        _focal_length = focal_length;
+        _refract_depth = refract_depth;
+        _reflect_depth = reflect_depth;
+    }
 	
 private:
 	// Allocates and initializes the pixel buffer for rendering, you
@@ -141,4 +153,17 @@ private:
 	// stack.  These are used during scene traversal. 
 	Matrix4x4 _modelToWorld;
 	Matrix4x4 _worldToModel;
+
+    // Switches controlling various features
+    int _nAA;           // number of AA rays for each pixel
+
+    int _nDOF;          // number of rays to render DOF for each pixel
+    double _aperture;      // aperture size for DOF
+    double _focal_length;  // focal length for DOF
+
+    int _reflect_depth; // refraction depth
+    int _refract_depth; // refraction depth
+
+
+
 };
