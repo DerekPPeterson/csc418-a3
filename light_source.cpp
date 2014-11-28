@@ -31,6 +31,7 @@ void PointLight::shade( Ray3D& ray ) {
 
     if (ray.intersection.shadow) {
         ray.col = col;
+        col.clamp();
         return;
     }
 

@@ -34,7 +34,7 @@ Intersection rayPlaneIntersect( Ray3D& obRay, Point3D point, Vector3D normal,
 
         // bounds check
         if (bounds(intersection.point[0], intersection.point[1]) 
-                && intersection.t_value > 0) {
+                && intersection.t_value > 1e-6) {
             intersection.none = false;
         }
     }
@@ -347,10 +347,12 @@ bool Mesh::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     faces = this->faces;
     for (int i = 0; i < this->nFaces; i++) {
         TriangleFace face = faces[i];
-
-//        cout << face.points[0] << "\n";
-//        cout << face.points[1] << "\n";
-//        cout << face.points[2] << "\n\n";
+        
+        // for meshes we're going to assume they are solid and set the normal 
+        // accordingly to be outward facing
+        if (face.normal.dot(obRay.dir) > 0) {
+            face.normal = -face.normal;
+        }
 
         // Need to pass triangle points into the bounds function, so have to 
         // do the plane boundry checking outside

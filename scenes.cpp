@@ -165,3 +165,95 @@ void part1(int width, int height)
 	raytracer.render(width, height, eye, view, up, fov, "part1_AA_view1.bmp");
 	raytracer.render(width, height, eye2, view2, up, fov, "part1_AA_view2.bmp");
 }
+
+void meshes_cube_guy(int width, int height) {
+	Raytracer raytracer;
+
+	// Defines a point light source.
+	raytracer.addLightSource( new PointLight(Point3D(0, 6, 0), 
+				Colour(0.9, 0.9, 0.9) ) );
+    
+    // Add objects
+	SceneDagNode* checker = raytracer.addObject( new Checkerboard(), &jade );
+	//SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
+
+	SceneDagNode* cube = raytracer.addObject( new Mesh("obj/cube.obj"), &mirror );
+	SceneDagNode* guy = raytracer.addObject( new Mesh("obj/humanoid_tri.obj"), &blue );
+    
+	double factor1[3] = {0.1, 0.1, 0.1};
+
+    raytracer.rotate(checker, 'x', -90);
+    raytracer.translate(checker, Vector3D(0, 0,-1));
+
+    raytracer.translate(cube, Vector3D(-1.5, 0, -2));
+    raytracer.rotate(cube, 'x', -45);
+    raytracer.rotate(cube, 'z', -45);
+
+    raytracer.translate(guy, Vector3D(0.5, -1, -1));
+    raytracer.scale(guy, Point3D(0, 0, 0), factor1);
+    raytracer.rotate(guy, 'y', -45);
+    raytracer.rotate(guy, 'x', -90);
+    raytracer.rotate(guy, 'z', -90);
+
+    //raytracer.translate(mirrorSphere, Vector3D(-3, 0, -3));
+    //aytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
+    
+	// Camera parameters.
+	Point3D eye(0, 0, 1);
+	Vector3D view(0, 0, -1);
+	Vector3D up(0, 1, 0);
+	double fov = 70;
+
+    raytracer.setFeatures(5, 1, 0, 1, 2, 2, true);
+	raytracer.render(width, height, eye, view, up, fov, "meshes_cube_guy.bmp");
+}
+
+void textures(int width, int height)
+{
+	Raytracer raytracer;
+
+	// Defines a point light source.
+	raytracer.addLightSource( new PointLight(Point3D(0, 6, 0), 
+				Colour(0.9, 0.9, 0.9) ) );
+    
+    // Add objects
+	SceneDagNode* checker = raytracer.addObject( new Checkerboard(), &jade );
+	SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
+	SceneDagNode* glassSphere = raytracer.addObject( new UnitSphere(), &glass );
+
+	SceneDagNode* map = raytracer.addObject( new UnitSquare(), &worldMat );
+	SceneDagNode* globe = raytracer.addObject( new UnitSphere(), &worldMat );
+    
+	// Apply some transformations to the unit square.
+	double factor2[3] = { 4.0, 2.0, 2.0 };
+	double factor3[3] = { 2.0, 2.0, 2.0 };
+
+    raytracer.rotate(checker, 'x', -90);
+    raytracer.translate(checker, Vector3D(0, 0,-1));
+
+    raytracer.translate(globe, Vector3D(1.5, 0.2, -2));
+    raytracer.rotate(globe, 'y', 180);
+
+    raytracer.translate(map, Vector3D(0, 0.5, -3));
+    raytracer.scale(map, Point3D(0, 0, 0), factor2);
+
+    raytracer.translate(mirrorSphere, Vector3D(-3, 0, -2));
+    raytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
+
+    raytracer.translate(glassSphere, Vector3D(-0.4, 0.2, -2));
+
+    
+	// Camera parameters.
+	Point3D eye(0, 0, 1);
+	Vector3D view(0, 0, -1);
+	Vector3D up(0, 1, 0);
+	double fov = 70;
+
+    raytracer.setFeatures(10, 1, 0, 1, 2, 2, true);
+	raytracer.render(width, height, eye, view, up, fov, "textures_view1.bmp");
+    
+	// Render it from a different point of view.
+	Point3D eye2(3, 3, 0);
+	Vector3D view2(-3, -3, -2);
+	raytracer.render(width, height, eye2, view2, up, fov, "textures_view2.bmp");
+}

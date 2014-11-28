@@ -469,7 +469,9 @@ int main(int argc, char* argv[])
     }
 
     //part1(width, height);
-    mega_render(width, height);
+    //mega_render(width, height);
+    //meshes_cube_guy(width, height);
+    textures(width, height);
 	
 	return 0;
 }
