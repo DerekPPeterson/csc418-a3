@@ -24,7 +24,37 @@ Raytracer::Raytracer() : _lightSource(NULL) {
 	_root = new SceneDagNode();
 
     // set the default render options
-    setFeautures(1, 1, 0, 1, 2, 2);
+    setFeatures(1, 1, 0, 1, 2, 2, true);
+}
+
+void Raytracer::setFeatures(int nAA, int nDOF, double aperture, 
+        double focal_length, int refract_depth, int reflect_depth, 
+        bool shadows) 
+{
+    _nAA = nAA;
+    _nDOF = nDOF;
+    _aperture = aperture;
+    _focal_length = focal_length;
+    _refract_depth = refract_depth;
+    _reflect_depth = reflect_depth;
+    _shadows = shadows;
+    _signature = false;
+    _specular = true;
+}
+
+void Raytracer::setFeatures(int nAA, int nDOF, double aperture, 
+        double focal_length, int refract_depth, int reflect_depth, 
+        bool shadows, bool signature, bool specular) 
+{
+    _nAA = nAA;
+    _nDOF = nDOF;
+    _aperture = aperture;
+    _focal_length = focal_length;
+    _refract_depth = refract_depth;
+    _reflect_depth = reflect_depth;
+    _shadows = shadows;
+    _signature = signature;
+    _specular = specular;
 }
 
 Raytracer::~Raytracer() {
@@ -193,13 +223,15 @@ void Raytracer::computeShading( Ray3D& ray ) {
 		// Each lightSource provides its own shading function.
 
         // shadows
-        Vector3D shadowDir = curLight->light->get_position() - ray.intersection.point;
-        shadowDir.normalize();
-        Point3D shadowOrigin = ray.intersection.point + 1e-6 * shadowDir; // avoid self-intersection
-        Ray3D shadowRay(shadowOrigin, shadowDir, 0, 0);
-        traverseScene(_root, shadowRay);
+        if (_shadows) {
+            Vector3D shadowDir = curLight->light->get_position() - ray.intersection.point;
+            shadowDir.normalize();
+            Point3D shadowOrigin = ray.intersection.point + 1e-6 * shadowDir; // avoid self-intersection
+            Ray3D shadowRay(shadowOrigin, shadowDir, 0, 0);
+            traverseScene(_root, shadowRay);
 
-        ray.intersection.shadow = (!shadowRay.intersection.none);
+            ray.intersection.shadow = (!shadowRay.intersection.none);
+        }
 
         // actually shade
         curLight->light->shade(ray);
@@ -238,6 +270,29 @@ void Raytracer::flushPixelBuffer( char *file_name ) {
 Colour Raytracer::shadeRay( Ray3D& ray ) {
 	Colour col(0.0, 0.0, 0.0); 
 	traverseScene(_root, ray); 
+
+    // scene signature
+    if (_signature) {
+        if (ray.intersection.none) {
+            return col;
+        } else {
+            col = ray.intersection.mat->diffuse;
+            return col;
+        }
+    }
+    
+    // scene signature
+    if (!_specular) {
+        if (ray.intersection.none) {
+            return col;
+        } else {
+            Material *rayMat = ray.intersection.mat;
+            Material temp(rayMat->ambient, rayMat->diffuse, Colour(0, 0, 0), 0);
+            ray.intersection.mat = &temp;
+            computeShading(ray);
+            return ray.col;
+        }
+    }
 
 	// Don't bother shading if the ray didn't hit 
 	// anything.
@@ -413,6 +468,7 @@ int main(int argc, char* argv[])
 		height = atoi(argv[2]);
     }
 
+    //part1(width, height);
     mega_render(width, height);
 	
 	return 0;

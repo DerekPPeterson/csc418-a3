@@ -136,7 +136,7 @@ bool UnitSphere::intersect( Ray3D& ray, const Matrix4x4& worldToModel,
     // Parameters TODO see wikipedia
     double a = obRay.dir.dot(obRay.dir);
     double b = 2 * obRay.dir.dot(rayOrginVec);
-    double c = rayOrginVec.dot(rayOrginVec) - 0.5 * 0.5;
+    double c = rayOrginVec.dot(rayOrginVec) - 0.25;
 
     // determin if intersection
     double det = b * b - 4 * a * c;
