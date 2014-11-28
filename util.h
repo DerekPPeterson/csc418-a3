@@ -157,6 +157,15 @@ struct Material {
         texture = NULL;
     }
 
+	Material( Colour ambient, Colour diffuse, Colour specular, double exp,
+            Texture* texture) :
+		ambient(ambient), diffuse(diffuse), specular(specular), 
+		specular_exp(exp), texture(texture)
+    {
+        reflects = false;
+        clear = false;
+    }
+
 	Material( Colour ambient, Colour diffuse, Colour specular, double exp ,
         bool reflects, Colour reflective) :
 		ambient(ambient), diffuse(diffuse), specular(specular), 

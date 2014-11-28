@@ -1,3 +1,5 @@
+#ifndef __RAYTRACER_H__
+#define __RAYTRACER_H__
 /***********************************************************
      Starter code for Assignment 3
 
@@ -167,3 +169,4 @@ private:
 
 
 };
+#endif
