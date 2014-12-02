@@ -21,6 +21,7 @@ Material glass(Colour(0.03, 0.03, 0.03), Colour(0, 0, 0),
         true, Colour(0.9, 0.9, 0.9), 1.3);
 
 Material red( Colour(0.3, 0, 0), Colour(0.7, 0, 0), Colour(0.2, 0, 0), 10);
+Material pink( Colour(1.5, 0.3, 0.3), Colour(0.8, 0.6, 0.6), Colour(0.4, 0.4, 0.4), 14);
 Material blue( Colour(0., 0, 0.3), Colour(0, 0, 0.7), Colour(0, 0, 0.2), 10);
 Material green( Colour(0, 0.3, 0), Colour(0, 0.7, 0), Colour(0, 0.2, 0), 10);
 Material white( Colour(0.3, 0.3, 0.3), Colour(0.7, 0.7, 0.7), Colour(0.2, 0.2, 0.2), 10);
@@ -256,4 +257,53 @@ void textures(int width, int height)
 	Point3D eye2(3, 3, 0);
 	Vector3D view2(-3, -3, -2);
 	raytracer.render(width, height, eye2, view2, up, fov, "textures_view2.bmp");
+}
+
+void heart(int width, int height) {
+	Raytracer raytracer;
+
+	// Defines a point light source.
+	raytracer.addLightSource( new PointLight(Point3D(0, 6, 0), 
+				Colour(0.9, 0.9, 0.9) ) );
+	raytracer.addLightSource( new PointLight(Point3D(0, 1, 2), 
+				Colour(0.9, 0.9, 0.9) ) );
+    
+    // Add objects
+	SceneDagNode* checker = raytracer.addObject( new Checkerboard(), &gold );
+	//SceneDagNode* mirrorSphere = raytracer.addObject( new UnitSphere(), &mirror );
+
+	SceneDagNode* heart = raytracer.addObject( new Mesh("obj/heart.obj"), &red );
+	SceneDagNode* guy = raytracer.addObject( new Mesh("obj/humanoid_tri.obj"), &blue );
+	SceneDagNode* girl = raytracer.addObject( new Mesh("obj/humanoid_tri.obj"), &pink );
+    
+	double factor1[3] = {0.1, 0.1, 0.1};
+
+    raytracer.rotate(checker, 'x', -90);
+    raytracer.translate(checker, Vector3D(0, 0,-1));
+
+    raytracer.translate(heart, Vector3D(0, 1, -3));
+
+    raytracer.translate(guy, Vector3D(1.1, -1, -2));
+    raytracer.scale(guy, Point3D(0, 0, 0), factor1);
+    raytracer.rotate(guy, 'y', -45);
+    raytracer.rotate(guy, 'x', -90);
+    raytracer.rotate(guy, 'z', -90);
+
+    raytracer.translate(girl, Vector3D(-1.1, -1, -2));
+    raytracer.scale(girl, Point3D(0, 0, 0), factor1);
+    raytracer.rotate(girl, 'y', 45);
+    raytracer.rotate(girl, 'x', -90);
+    raytracer.rotate(girl, 'z', -90);
+
+    //raytracer.translate(mirrorSphere, Vector3D(-3, 0, -3));
+    //aytracer.scale(mirrorSphere, Point3D(0, 0, 0), factor3);
+    
+	// Camera parameters.
+	Point3D eye(0, 0, 1);
+	Vector3D view(0, 0, -1);
+	Vector3D up(0, 1, 0);
+	double fov = 70;
+
+    raytracer.setFeatures(5, 1, 0, 1, 2, 2, true);
+	raytracer.render(width, height, eye, view, up, fov, "heart.bmp");
 }
